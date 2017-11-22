@@ -19,7 +19,7 @@ typedef struct thread_arg{
 
 
 /*funcao de erro e termino */
-void kill(char* reason);
+void die(char* reason);
 
 
 /*funcoes para inicializar e destruir mutex e variavel de condicao */
@@ -47,7 +47,7 @@ int *getFlag(Thread_Arg arg);
 DoubleMatrix2D *getMatrix(Thread_Arg arg);
 DoubleMatrix2D *getMatrixAux(Thread_Arg arg);
 
-void setMatrix(Thread_Arg arg, DoubleMatrix2D *matrix); 
+void setMatrix(Thread_Arg arg, DoubleMatrix2D *matrix);
 void setMatrixAux(Thread_Arg arg, DoubleMatrix2D *matrix);
 void setIter(Thread_Arg arg, int iter);
 void setId(Thread_Arg arg, int id);

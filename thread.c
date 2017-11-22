@@ -15,7 +15,7 @@ pthread_mutex_t		mutex;
 
 
 /*funcao de erro e termino */
-void kill(char* reason) {
+void die(char* reason) {
 	fprintf(stderr, "%s\n", reason);
 	exit(1);
 }
@@ -25,11 +25,11 @@ void kill(char* reason) {
 /*inicializa o mutex e variável de condicao */
 void init_mutex_cond() {
 
-	if(pthread_cond_init(&wait_for_all_threads, NULL) != 0) 
-  	kill("\nErro ao inicializar variável de condição\n"); 
+	if(pthread_cond_init(&wait_for_all_threads, NULL) != 0)
+  	die("\nErro ao inicializar variável de condição\n");
 
- 	if(pthread_mutex_init(&mutex, NULL) != 0) 
-		kill("\nErro ao inicializar mutex\n"); 
+ 	if(pthread_mutex_init(&mutex, NULL) != 0)
+		die("\nErro ao inicializar mutex\n");
 
 }
 
@@ -39,26 +39,26 @@ void init_mutex_cond() {
 void destroy_mutex_cond() {
 
 	if(pthread_mutex_destroy(&mutex) != 0)
-		kill("\nErro ao destruir mutex\n");
-	
+		die("\nErro ao destruir mutex\n");
+
 	if(pthread_cond_destroy(&wait_for_all_threads) != 0)
-		kill("\nErro ao destruir variável de condição\n");
+		die("\nErro ao destruir variável de condição\n");
 
 }
 
 
 
-/* calcula os valores da matrix da linha "from_line" a linha "to_line"; 
+/* calcula os valores da matrix da linha "from_line" a linha "to_line";
  * tbm verifica se todos os valores são inferiores a maxD e devolve 1 se sim,
  * 0 caso contrário */
 int calc_values(DoubleMatrix2D *matrix, DoubleMatrix2D *matrix_aux, int from_line, int to_line,  int size_line, double maxD) {
 	int i, j; /*iteradores*/
 	int too_small = 1;
 	for (i = from_line + 1; i < to_line; i++)
-		for(j = 1; j < size_line - 1; j++) { 
+		for(j = 1; j < size_line - 1; j++) {
 			/*calculo dos valores segundo o algoritmo do enunciado*/
-			dm2dSetEntry(matrix_aux, i, j, (dm2dGetEntry(matrix, i - 1, j) + 
-dm2dGetEntry(matrix, i, j - 1) + dm2dGetEntry(matrix, i + 1, j) + 
+			dm2dSetEntry(matrix_aux, i, j, (dm2dGetEntry(matrix, i - 1, j) +
+dm2dGetEntry(matrix, i, j - 1) + dm2dGetEntry(matrix, i + 1, j) +
 dm2dGetEntry(matrix, i, j + 1)) / 4);
 		too_small = too_small && (dm2dGetEntry(matrix_aux, i, j) - dm2dGetEntry(matrix, i, j) < maxD);
 		}
@@ -67,14 +67,14 @@ dm2dGetEntry(matrix, i, j + 1)) / 4);
 
 
 
-/*verifica se todos os valores em vec sao 1; 
+/*verifica se todos os valores em vec sao 1;
   se nao for o caso, coloca todos os valores a 0*/
 void verificar_maxD(int *vec, int n) {
 	int i, res = 1;
-	for (i = 0; i < n; i++) 
-		if((res = res && vec[i]) == 0) 
+	for (i = 0; i < n; i++)
+		if((res = res && vec[i]) == 0)
 			break;
-	if(res == 0) 
+	if(res == 0)
 		for (i = 0; i < n; i++)
 			vec[i] = res;
 }
@@ -85,7 +85,7 @@ void verificar_maxD(int *vec, int n) {
 void barreira_espera_por_todos (int *threads, int FULL, int *under_maxD_vec, int *localFlag, int *FLAG) {
 
 	if(pthread_mutex_lock(&mutex) != 0)
-		kill("\nErro ao bloquear mutex\n");
+		die("\nErro ao bloquear mutex\n");
 
 	(*threads)++;
 	*localFlag = *FLAG; /*assim a condicao dentro do while vai ser verdadeira
@@ -101,15 +101,15 @@ void barreira_espera_por_todos (int *threads, int FULL, int *under_maxD_vec, int
 		*FLAG = !(*FLAG);
 		verificar_maxD(under_maxD_vec, FULL);
 		if(pthread_cond_broadcast(&wait_for_all_threads) != 0)
-			kill("\nErro ao desbloquear variável de condição\n");
-	}	
-	
-	while(*FLAG == *localFlag) 
+			die("\nErro ao desbloquear variável de condição\n");
+	}
+
+	while(*FLAG == *localFlag)
 		if(pthread_cond_wait(&wait_for_all_threads, &mutex) != 0)
-			kill("\nErro ao esperar pela variável de condição\n");
+			die("\nErro ao esperar pela variável de condição\n");
 
 	if(pthread_mutex_unlock(&mutex) != 0)
-		kill("\nErro ao desbloquear mutex\n");
+		die("\nErro ao desbloquear mutex\n");
 }
 
 
@@ -140,4 +140,3 @@ void setMaxD(Thread_Arg arg, double maxD) {arg->maxD = maxD;}
 void setBlockedTrab(Thread_Arg arg, int *px) {arg->blocked_trab = px;}
 void setUnderMaxDVec(Thread_Arg arg, int *px) {arg->under_maxD_vec = px;}
 void setFlag(Thread_Arg arg, int *px) {arg->FLAG = px;}
-

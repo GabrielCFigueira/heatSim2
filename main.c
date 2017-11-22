@@ -14,7 +14,7 @@
 int parse_integer_or_exit(char const *str, char const *name)
 {
 	int value;
- 
+
 	if(sscanf(str, "%d", &value) != 1) {
 		fprintf(stderr, "\nErro no argumento \"%s\".\n\n", name);
 		 exit(1);
@@ -49,7 +49,7 @@ void* theThread(void * a) {
 
 
 	/*numero total de threads*/
-	int total_trab = (getSizeLine(arg) - 2) / (getNLine(arg) - 2); 
+	int total_trab = (getSizeLine(arg) - 2) / (getNLine(arg) - 2);
 
 	int i; /*iterador*/
 
@@ -60,7 +60,7 @@ void* theThread(void * a) {
 
 
 	for (i = 0; i < getIter(arg); i++) {
-		under_maxD_vec[getId(arg)] = calc_values(getMatrix(arg), getMatrixAux(arg), getId(arg) * (getNLine(arg) - 2), getId(arg) * (getNLine(arg) - 2) + getNLine(arg) - 1, getSizeLine(arg), getMaxD(arg)); 
+		under_maxD_vec[getId(arg)] = calc_values(getMatrix(arg), getMatrixAux(arg), getId(arg) * (getNLine(arg) - 2), getId(arg) * (getNLine(arg) - 2) + getNLine(arg) - 1, getSizeLine(arg), getMaxD(arg));
 
 		/*troca dos ponteiros matrix e matrix_aux*/
 		tmp = getMatrix(arg);
@@ -71,7 +71,7 @@ void* theThread(void * a) {
 
 
 		if(under_maxD_vec[getId(arg)])
-			break; 
+			break;
 
 	}
 
@@ -89,10 +89,10 @@ void* theThread(void * a) {
 
 
 int main (int argc, char** argv) {
-	
+
 	if(argc != 9) {
    	fprintf(stderr, "\nNumero invalido de argumentos.\n");
- 		kill("Uso: heatSim N tEsq tSup tDir tInf iter trab maxD\n\n");
+ 		die("Uso: heatSim N tEsq tSup tDir tInf iter trab maxD\n\n");
 	}
 
 
@@ -106,19 +106,19 @@ int main (int argc, char** argv) {
 	double maxD = parse_double_or_exit(argv[8], "maxD");
 
 
-	if (N < 1 || tEsq < 0 || tSup < 0 || tDir < 0 || tInf < 0 || iter < 1 || 
-trab < 1 || N % trab != 0 || maxD < 0) kill("\nArgumentos invalidos\n");
+	if (N < 1 || tEsq < 0 || tSup < 0 || tDir < 0 || tInf < 0 || iter < 1 ||
+trab < 1 || N % trab != 0 || maxD < 0) die("\nArgumentos invalidos\n");
 
-		
-	fprintf(stderr, "\nArgumentos:\nN=%d tEsq=%.1f tSup=%.1f tDir=%.1f" 
-" tInf=%.1f iteracoes=%d threads=%d maxD=%.1f\n",	N, tEsq, tSup, tDir, 
+
+	fprintf(stderr, "\nArgumentos:\nN=%d tEsq=%.1f tSup=%.1f tDir=%.1f"
+" tInf=%.1f iteracoes=%d threads=%d maxD=%.1f\n",	N, tEsq, tSup, tDir,
 tInf, iter, trab, maxD);
 
 	DoubleMatrix2D *matrix = dm2dNew(N+2, N+2);
 	DoubleMatrix2D *matrix_aux = dm2dNew(N+2, N+2);
 
-	if (matrix == NULL || matrix == NULL) 
-		kill("\nErro ao criar as matrizes\n");
+	if (matrix == NULL || matrix == NULL)
+		die("\nErro ao criar as matrizes\n");
 
 
 	/*valores iniciais da matrix*/
@@ -131,19 +131,19 @@ tInf, iter, trab, maxD);
 	dm2dSetColumnTo (matrix_aux, 0, tEsq);
 	dm2dSetColumnTo (matrix_aux, N+1, tDir);
 
-	
+
 	/*alocacao dos threads, seus argumentos e um buffer para a main thread*/
 	pthread_t *threads = (pthread_t*) malloc(trab *  sizeof(pthread_t));
 	Thread_Arg arguments = (Thread_Arg) malloc(trab * sizeof(struct thread_arg));
 	int *under_maxD_vec = (int*) malloc (sizeof(int) * trab);
 
-	if (threads == NULL || arguments == NULL || under_maxD_vec == NULL) 
-		kill("\nErro ao alocar memoria para os threads\n"); 
-	
+	if (threads == NULL || arguments == NULL || under_maxD_vec == NULL)
+		die("\nErro ao alocar memoria para os threads\n");
+
 
 	/*inicializacao do mutex e variavel de condicao */
 	init_mutex_cond();
-  
+
 
 
 	int blocked_trab = 0;
@@ -163,20 +163,20 @@ tInf, iter, trab, maxD);
 		setUnderMaxDVec(&arguments[i], under_maxD_vec);
 		setFlag(&arguments[i], &FLAG);
 		if (pthread_create(&threads[i], NULL, theThread, &arguments[i]) != 0)
-      kill("\nErro ao criar uma thread.\n");
+      die("\nErro ao criar uma thread.\n");
   }
 
 
-	for (i = 0; i < trab; i++) 
-    if (pthread_join(threads[i], NULL) != 0) 
-    	kill("\nErro ao esperar por uma thread\n");
+	for (i = 0; i < trab; i++)
+    if (pthread_join(threads[i], NULL) != 0)
+    	die("\nErro ao esperar por uma thread\n");
 
 
 	destroy_mutex_cond();
 
 
 	free(under_maxD_vec);
-	dm2dPrint(getMatrix(arguments));	
+	dm2dPrint(getMatrix(arguments));
 	free(threads);
 	dm2dFree(matrix);
 	dm2dFree(matrix_aux);
@@ -185,5 +185,3 @@ tInf, iter, trab, maxD);
 
 	return 0;
 }
-
-
