@@ -144,12 +144,14 @@ N, tEsq, tSup, tDir, tInf, iter, trab, maxD, fichS, periodoS); */
 		dm2dSetLineTo (matrix_aux, N+1, tInf);
 		dm2dSetColumnTo (matrix_aux, 0, tEsq);
 		dm2dSetColumnTo (matrix_aux, N+1, tDir);
+		
 	}
 	else {
 		matrix = readMatrix2dFromFile(fp, N + 2, N + 2);
 		matrix_aux = dm2dNew(N+2, N+2);
 		dm2dCopy(matrix_aux, matrix);
-		fclose(fp);
+		if(fclose(fp) != 0)
+			fprintf(stderr, "\nErro ao fechar o ficheiro %s\n", fichS);
 		if (matrix == NULL || matrix_aux == NULL)
 			die("\nErro ao ler as matrizes do ficheiro\n");
 	}
