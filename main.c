@@ -90,10 +90,11 @@ void* theThread(void * a) {
 
 int main (int argc, char** argv) {
 
-	if(argc != 9) {
-   	fprintf(stderr, "\nNumero invalido de argumentos.\n");
- 		die("Uso: heatSim N tEsq tSup tDir tInf iter trab maxD\n\n");
-	}
+	if (argc != 11) {
+    fprintf(stderr, "Utilizacao: ./heatSim N tEsq tSup"
+"tDir tInf iter trab maxD fichS periodoS\n\n");
+    die("Numero de argumentos invalido");
+  }
 
 
 	int N = parse_integer_or_exit(argv[1], "N");
@@ -104,32 +105,55 @@ int main (int argc, char** argv) {
 	int iter = parse_integer_or_exit(argv[6], "iter");
 	int trab = parse_integer_or_exit(argv[7], "trab");
 	double maxD = parse_double_or_exit(argv[8], "maxD");
+	int periodoS = parse_integer_or_exit(argv[10], "periodoS");
+
+	char* fichS = argv[9];
+	if(fichS == NULL)
+		die("\nNome de ficheiro invalido\n");
 
 
 	if (N < 1 || tEsq < 0 || tSup < 0 || tDir < 0 || tInf < 0 || iter < 1 ||
-trab < 1 || N % trab != 0 || maxD < 0) die("\nArgumentos invalidos\n");
+trab < 1 || N % trab != 0 || maxD < 0|| periodoS < 0)
+ 		die("\nArgumentos invalidos\n");
 
 
 	fprintf(stderr, "\nArgumentos:\nN=%d tEsq=%.1f tSup=%.1f tDir=%.1f"
-" tInf=%.1f iteracoes=%d threads=%d maxD=%.1f\n",	N, tEsq, tSup, tDir,
-tInf, iter, trab, maxD);
+" tInf=%.1f iteracoes=%d\n threads=%d maxD=%.1f fichS=%s periodoS=%d\n",
+N, tEsq, tSup, tDir, tInf, iter, trab, maxD, fichS, periodoS);
 
-	DoubleMatrix2D *matrix = dm2dNew(N+2, N+2);
-	DoubleMatrix2D *matrix_aux = dm2dNew(N+2, N+2);
+
+	DoubleMatrix2D *matrix;
+	DoubleMatrix2D *matrix_aux;
+	printf("%s\n", fichS);
+	FILE *fp = fopen(fichS, "r");
+	if(fp == NULL){
+
+		matrix = dm2dNew(N+2, N+2);
+ 		matrix_aux = dm2dNew(N+2, N+2);
+
+
+		/*valores iniciais da matrix*/
+		dm2dSetLineTo (matrix, 0, tSup);
+		dm2dSetLineTo (matrix, N+1, tInf);
+		dm2dSetColumnTo (matrix, 0, tEsq);
+		dm2dSetColumnTo (matrix, N+1, tDir);
+		dm2dSetLineTo (matrix_aux, 0, tSup);
+		dm2dSetLineTo (matrix_aux, N+1, tInf);
+		dm2dSetColumnTo (matrix_aux, 0, tEsq);
+		dm2dSetColumnTo (matrix_aux, N+1, tDir);
+	}
+	else {
+		matrix = readMatrix2dFromFile(fp, N + 2, N + 2);
+		matrix_aux = readMatrix2dFromFile(fp, N + 2, N + 2);
+	}
+
+	if(fclose(fp) != 0)
+		fprintf(stderr, "\nErro ao fechar ficheiro %s\n", fichS);
+
 
 	if (matrix == NULL || matrix == NULL)
 		die("\nErro ao criar as matrizes\n");
 
-
-	/*valores iniciais da matrix*/
-	dm2dSetLineTo (matrix, 0, tSup);
-	dm2dSetLineTo (matrix, N+1, tInf);
-	dm2dSetColumnTo (matrix, 0, tEsq);
-	dm2dSetColumnTo (matrix, N+1, tDir);
-	dm2dSetLineTo (matrix_aux, 0, tSup);
-	dm2dSetLineTo (matrix_aux, N+1, tInf);
-	dm2dSetColumnTo (matrix_aux, 0, tEsq);
-	dm2dSetColumnTo (matrix_aux, N+1, tDir);
 
 
 	/*alocacao dos threads, seus argumentos e um buffer para a main thread*/
