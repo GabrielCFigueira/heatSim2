@@ -107,7 +107,7 @@ int main (int argc, char** argv) {
 	double maxD = parse_double_or_exit(argv[8], "maxD");
 	int periodoS = parse_integer_or_exit(argv[10], "periodoS");
 
-	char* fichS = argv[9];
+	const char *fichS = argv[9];
 	if(fichS == NULL)
 		die("\nNome de ficheiro invalido\n");
 
@@ -117,19 +117,22 @@ trab < 1 || N % trab != 0 || maxD < 0|| periodoS < 0)
  		die("\nArgumentos invalidos\n");
 
 
-	fprintf(stderr, "\nArgumentos:\nN=%d tEsq=%.1f tSup=%.1f tDir=%.1f"
-" tInf=%.1f iteracoes=%d\n threads=%d maxD=%.1f fichS=%s periodoS=%d\n",
-N, tEsq, tSup, tDir, tInf, iter, trab, maxD, fichS, periodoS);
+/*	fprintf(stderr, "\nArgumentos:\nN=%d tEsq=%.1f tSup=%.1f tDir=%.1f"
+" tInf=%.1f iteracoes=%d\nthreads=%d maxD=%.1f fichS=%s periodoS=%d\n",
+N, tEsq, tSup, tDir, tInf, iter, trab, maxD, fichS, periodoS); */
 
 
 	DoubleMatrix2D *matrix;
 	DoubleMatrix2D *matrix_aux;
-	printf("%s\n", fichS);
 	FILE *fp = fopen(fichS, "r");
 	if(fp == NULL){
 
+
 		matrix = dm2dNew(N+2, N+2);
  		matrix_aux = dm2dNew(N+2, N+2);
+
+		if (matrix == NULL || matrix_aux == NULL)
+			die("\nErro ao criar as matrizes\n");
 
 
 		/*valores iniciais da matrix*/
@@ -144,15 +147,13 @@ N, tEsq, tSup, tDir, tInf, iter, trab, maxD, fichS, periodoS);
 	}
 	else {
 		matrix = readMatrix2dFromFile(fp, N + 2, N + 2);
-		matrix_aux = readMatrix2dFromFile(fp, N + 2, N + 2);
+		matrix_aux = dm2dNew(N+2, N+2);
+		dm2dCopy(matrix_aux, matrix);
+		fclose(fp);
+		if (matrix == NULL || matrix_aux == NULL)
+			die("\nErro ao ler as matrizes do ficheiro\n");
 	}
 
-	if(fclose(fp) != 0)
-		fprintf(stderr, "\nErro ao fechar ficheiro %s\n", fichS);
-
-
-	if (matrix == NULL || matrix == NULL)
-		die("\nErro ao criar as matrizes\n");
 
 
 
@@ -160,6 +161,7 @@ N, tEsq, tSup, tDir, tInf, iter, trab, maxD, fichS, periodoS);
 	pthread_t *threads = (pthread_t*) malloc(trab *  sizeof(pthread_t));
 	Thread_Arg arguments = (Thread_Arg) malloc(trab * sizeof(struct thread_arg));
 	int *under_maxD_vec = (int*) malloc (sizeof(int) * trab);
+
 
 	if (threads == NULL || arguments == NULL || under_maxD_vec == NULL)
 		die("\nErro ao alocar memoria para os threads\n");
