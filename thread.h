@@ -32,7 +32,7 @@ void destroy_mutex_cond();
 
 int calc_values(DoubleMatrix2D *matrix, DoubleMatrix2D *matrix_aux, int from_line, int to_line,  int size_line, double maxD);
 void verificar_maxD(int *vec, int n);
-void barreira_espera_por_todos (int *threads, int FULL, int *under_maxD_vec, int *localFlag, int *FLAG);
+void barreira_espera_por_todos (Thread_Arg arg, int FULL, int *localFlag);
 
 
 

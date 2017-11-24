@@ -69,7 +69,7 @@ void* theThread(void * a) {
 		setMatrix(arg, getMatrixAux(arg));
 		setMatrixAux(arg, tmp);
 
-		barreira_espera_por_todos(getBlockedTrab(arg), total_trab, under_maxD_vec, &localFlag, getFlag(arg));
+		barreira_espera_por_todos(arg, total_trab, &localFlag);
 
 
 		if(under_maxD_vec[getId(arg)])

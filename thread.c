@@ -10,7 +10,8 @@
 
 /*mutex e condicao usados na sincronizacao dos threads */
 pthread_cond_t 		wait_for_all_threads;
-pthread_mutex_t		mutex;
+pthread_mutex_t		barrier_mutex;
+
 
 
 
@@ -28,7 +29,7 @@ void init_mutex_cond() {
 	if(pthread_cond_init(&wait_for_all_threads, NULL) != 0)
   	die("\nErro ao inicializar variável de condição\n");
 
- 	if(pthread_mutex_init(&mutex, NULL) != 0)
+ 	if(pthread_mutex_init(&barrier_mutex, NULL) != 0)
 		die("\nErro ao inicializar mutex\n");
 
 }
@@ -38,7 +39,7 @@ void init_mutex_cond() {
 /*destroi o mutex e variavel de condicao */
 void destroy_mutex_cond() {
 
-	if(pthread_mutex_destroy(&mutex) != 0)
+	if(pthread_mutex_destroy(&barrier_mutex) != 0)
 		die("\nErro ao destruir mutex\n");
 
 	if(pthread_cond_destroy(&wait_for_all_threads) != 0)
@@ -82,9 +83,13 @@ void verificar_maxD(int *vec, int n) {
 
 
 /*barreira que sincroniza as threads */
-void barreira_espera_por_todos (int *threads, int FULL, int *under_maxD_vec, int *localFlag, int *FLAG) {
+void barreira_espera_por_todos (Thread_Arg arg, int FULL, int *localFlag) {
 
-	if(pthread_mutex_lock(&mutex) != 0)
+	int *threads = getBlockedTrab(arg);
+	int *FLAG = getFlag(arg);
+	int *under_maxD_vec = getUnderMaxDVec(arg);
+
+	if(pthread_mutex_lock(&barrier_mutex) != 0)
 		die("\nErro ao bloquear mutex\n");
 
 	(*threads)++;
@@ -96,7 +101,7 @@ void barreira_espera_por_todos (int *threads, int FULL, int *under_maxD_vec, int
 	/* se for a ultima thread a chegar, esta condicao vai ser verdadeira "*threads = FULL"
 	 * esta ultima thread vai repor a "FLAG", determinar se e necessario continuar
 	 * as iteracoes e acordar as restantes threads */
-	if(*threads == FULL) {
+	if(*threads == FULL ) {
 		(*threads) = 0;
 		*FLAG = !(*FLAG);
 		verificar_maxD(under_maxD_vec, FULL);
@@ -105,10 +110,10 @@ void barreira_espera_por_todos (int *threads, int FULL, int *under_maxD_vec, int
 	}
 
 	while(*FLAG == *localFlag)
-		if(pthread_cond_wait(&wait_for_all_threads, &mutex) != 0)
+		if(pthread_cond_wait(&wait_for_all_threads, &barrier_mutex) != 0)
 			die("\nErro ao esperar pela variável de condição\n");
 
-	if(pthread_mutex_unlock(&mutex) != 0)
+	if(pthread_mutex_unlock(&barrier_mutex) != 0)
 		die("\nErro ao desbloquear mutex\n");
 }
 
