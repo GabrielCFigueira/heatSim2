@@ -125,9 +125,12 @@ int getSizeLine(Thread_Arg arg) {return arg->size_line;}
 int getNLine(Thread_Arg arg) {return arg->n_line;}
 int getIter(Thread_Arg arg) {return arg->iter;}
 double getMaxD(Thread_Arg arg) {return arg->maxD;}
+int getPeriodoS(Thread_Arg arg) {return arg->periodoS;}
 int *getBlockedTrab(Thread_Arg arg) {return arg->blocked_trab;}
 int *getUnderMaxDVec(Thread_Arg arg) {return arg->under_maxD_vec;}
 int *getFlag(Thread_Arg arg) {return arg->FLAG;}
+char *getFilename(Thread_Arg arg) {return arg->filename;}
+
 DoubleMatrix2D *getMatrix(Thread_Arg arg) {return arg->matrix;}
 DoubleMatrix2D *getMatrixAux(Thread_Arg arg) {return arg->matrix_aux;}
 void setMatrix(Thread_Arg arg, DoubleMatrix2D *matrix) {arg->matrix = matrix;}
@@ -137,6 +140,8 @@ void setId(Thread_Arg arg, int id) { arg->id = id;}
 void setSizeLine(Thread_Arg arg, int size_line) {arg->size_line = size_line;}
 void setNLine(Thread_Arg arg, int n_line) {arg->n_line = n_line;}
 void setMaxD(Thread_Arg arg, double maxD) {arg->maxD = maxD;}
+void setPeriodoS(Thread_Arg arg, int periodoS) {arg->periodoS = periodoS;}
 void setBlockedTrab(Thread_Arg arg, int *px) {arg->blocked_trab = px;}
 void setUnderMaxDVec(Thread_Arg arg, int *px) {arg->under_maxD_vec = px;}
 void setFlag(Thread_Arg arg, int *px) {arg->FLAG = px;}
+void setFilename(Thread_Arg arg, char* filename) {arg->filename = filename;}

@@ -28,7 +28,7 @@ DoubleMatrix2D* dm2dNew(int lines, int columns) {
     return NULL;
   }
 
-  for (i=0; i<lines; i++) 
+  for (i=0; i<lines; i++)
     for (j=0; j<columns; j++)
       dm2dSetEntry(matrix, i, j, 0);
 
@@ -53,7 +53,7 @@ double* dm2dGetLine (DoubleMatrix2D *matrix, int line_nb) {
 }
 
 /*--------------------------------------------------------------------
-| Function: dm2dSetLine 
+| Function: dm2dSetLine
 ---------------------------------------------------------------------*/
 
 void dm2dSetLine (DoubleMatrix2D *matrix, int line_nb, double* line_values) {
@@ -61,14 +61,14 @@ void dm2dSetLine (DoubleMatrix2D *matrix, int line_nb, double* line_values) {
 }
 
 /*--------------------------------------------------------------------
-| Function: dm2dSetLineTo 
+| Function: dm2dSetLineTo
 ---------------------------------------------------------------------*/
 
 void dm2dSetLineTo (DoubleMatrix2D *matrix, int line, double value) {
   int i;
 
   for (i=0; i<matrix->n_c; i++)
-    dm2dSetEntry(matrix, line, i, value); 
+    dm2dSetEntry(matrix, line, i, value);
 }
 
 
@@ -80,7 +80,7 @@ void dm2dSetColumnTo (DoubleMatrix2D *matrix, int column, double value) {
   int i;
 
   for (i=0; i<matrix->n_l; i++)
-    dm2dSetEntry(matrix, i, column, value); 
+    dm2dSetEntry(matrix, i, column, value);
 }
 
 /*--------------------------------------------------------------------
@@ -122,7 +122,7 @@ DoubleMatrix2D *readMatrix2dFromFile(FILE *f, int l, int c) {
   m = dm2dNew(l, c);
   if (m==NULL)
     return NULL;
-  
+
   //Ler pontos da matriz
   //Nesta implementacao, ignora a existencia e posicionamento
   //de quebras de linha
@@ -145,7 +145,7 @@ DoubleMatrix2D *readMatrix2dFromFile(FILE *f, int l, int c) {
 | Function: dm2dPrinttoFile
 ---------------------------------------------------------------------*/
 void dm2dPrintToFile(DoubleMatrix2D *matrix, const char *filename) {
-	
+
 	FILE *f;
 
 	if ((f = fopen(filename , "w")) == NULL) {
@@ -153,11 +153,16 @@ void dm2dPrintToFile(DoubleMatrix2D *matrix, const char *filename) {
 		exit(1);
 	}
 	int i, j;
-	for(i = 0; i < matrix->n_l; i++)
+	for(i = 0; i < matrix->n_l; i++) {
 		for(j = 0; j < matrix->n_c; j++)
-			if (fprintf(f, "%d", dm2dGetEntry(matrix, i, j) < 0)) {
+			if (fprintf(f, "%lf ", dm2dGetEntry(matrix, i, j)) < 0) {
 				fprintf(stderr, "\nErro ao imprimir a matrix para o ficheiro\n");
 				exit(1);
 			}
+    if (fprintf(f, "\n") < 0) {
+      fprintf(stderr, "\nErro ao imprimir a matrix para o ficheiro\n");
+      exit(1);
+    }
+  }
 	fclose(f);
 }

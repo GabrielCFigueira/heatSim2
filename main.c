@@ -3,6 +3,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <pthread.h>
+#include <unistd.h>
+#include <sys/wait.h>
 #include "matrix2d.h"
 #include "thread.h"
 
@@ -72,6 +74,13 @@ void* theThread(void * a) {
 
 		if(under_maxD_vec[getId(arg)])
 			break;
+		if(getId(arg) == 0 && (i + 1) % getPeriodoS(arg) == 0) {
+			pid_t pid = fork();
+			if(pid == 0) {
+				dm2dPrintToFile(getMatrix(arg), getFilename(arg));
+				exit(0);
+			}
+		}
 
 	}
 
@@ -107,7 +116,7 @@ int main (int argc, char** argv) {
 	double maxD = parse_double_or_exit(argv[8], "maxD");
 	int periodoS = parse_integer_or_exit(argv[10], "periodoS");
 
-	const char *fichS = argv[9];
+	char *fichS = argv[9];
 	if(fichS == NULL)
 		die("\nNome de ficheiro invalido\n");
 
@@ -117,15 +126,15 @@ trab < 1 || N % trab != 0 || maxD < 0|| periodoS < 0)
  		die("\nArgumentos invalidos\n");
 
 
-/*	fprintf(stderr, "\nArgumentos:\nN=%d tEsq=%.1f tSup=%.1f tDir=%.1f"
+	fprintf(stderr, "\nArgumentos:\nN=%d tEsq=%.1f tSup=%.1f tDir=%.1f"
 " tInf=%.1f iteracoes=%d\nthreads=%d maxD=%.1f fichS=%s periodoS=%d\n",
-N, tEsq, tSup, tDir, tInf, iter, trab, maxD, fichS, periodoS); */
+N, tEsq, tSup, tDir, tInf, iter, trab, maxD, fichS, periodoS);
 
 
 	DoubleMatrix2D *matrix;
 	DoubleMatrix2D *matrix_aux;
 	FILE *fp = fopen(fichS, "r");
-	if(fp == NULL){
+	if(fp == NULL) {
 
 
 		matrix = dm2dNew(N+2, N+2);
@@ -144,7 +153,7 @@ N, tEsq, tSup, tDir, tInf, iter, trab, maxD, fichS, periodoS); */
 		dm2dSetLineTo (matrix_aux, N+1, tInf);
 		dm2dSetColumnTo (matrix_aux, 0, tEsq);
 		dm2dSetColumnTo (matrix_aux, N+1, tDir);
-		
+
 	}
 	else {
 		matrix = readMatrix2dFromFile(fp, N + 2, N + 2);
@@ -184,12 +193,14 @@ N, tEsq, tSup, tDir, tInf, iter, trab, maxD, fichS, periodoS); */
 		setNLine(&arguments[i], N / trab + 2);
 		setIter(&arguments[i], iter);
 		setMaxD(&arguments[i], maxD);
+		setPeriodoS(&arguments[i], periodoS);
 		setMatrix(&arguments[i], matrix);
 		setMatrixAux(&arguments[i], matrix_aux);
 		setBlockedTrab(&arguments[i], &blocked_trab);
 		under_maxD_vec[i] = 1;
 		setUnderMaxDVec(&arguments[i], under_maxD_vec);
 		setFlag(&arguments[i], &FLAG);
+		setFilename(&arguments[i], fichS);
 		if (pthread_create(&threads[i], NULL, theThread, &arguments[i]) != 0)
       die("\nErro ao criar uma thread.\n");
   }
@@ -205,6 +216,10 @@ N, tEsq, tSup, tDir, tInf, iter, trab, maxD, fichS, periodoS); */
 
 	free(under_maxD_vec);
 	dm2dPrint(getMatrix(arguments));
+	wait(NULL);
+	if(unlink(fichS) != 0)
+		fprintf(stderr, "\nErro ao eliminar o ficheiro de salvaguarda\n");
+
 	free(threads);
 	dm2dFree(matrix);
 	dm2dFree(matrix_aux);
