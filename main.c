@@ -77,7 +77,29 @@ getMaxD(arg));
 
 
 		if(barreira_espera_por_todos(arg, total_trab, &localFlag)) {
-			dm2dPrintToFile(getMatrix(arg), getFilename(arg));
+			char *filename = getFilename(arg);
+			char *temporaryFilename = (char*) malloc (2 + strlen(filename));
+			temporaryFilename[1 + strlen(filename)] = '\0';
+			int i, j, flag = 1;
+			for (j = (i = strlen(filename) - 1) + 1; i >= 0; i--, j--) {
+				if(flag) {
+				 	if (filename[i] == '/') {
+						temporaryFilename[j] = '~';
+						j--;
+						flag = 0;
+					}
+					else if(i == 0) {
+						temporaryFilename[j--] = filename[i];
+						temporaryFilename[j] = '~';
+						break;
+					}
+				}
+				temporaryFilename[j] = filename[i];
+			}
+			dm2dPrintToFile(getMatrix(arg), temporaryFilename);
+			sleep(5);
+			rename(temporaryFilename, filename);
+
 			exit(0);
 		}
 
@@ -120,8 +142,8 @@ int main (int argc, char** argv) {
 	int periodoS = parse_integer_or_exit(argv[10], "periodoS");
 
 	char *fichS = argv[9];
-	if(fichS == NULL)
-		die("\nNome de ficheiro invalido\n");
+	/*FIXME if(fichS == NULL)
+		die("\nNome de ficheiro invalido\n"); */
 
 
 	if (N < 1 || tEsq < 0 || tSup < 0 || tDir < 0 || tInf < 0 || iter < 1 ||
