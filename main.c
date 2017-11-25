@@ -61,6 +61,8 @@ void* theThread(void * a) {
 
 
 
+
+
 	for (i = 0; i < getIter(arg); i++) {
 		under_maxD_vec[getId(arg)] = calc_values(getMatrix(arg), getMatrixAux(arg), getId(arg) * (getNLine(arg) - 2), getId(arg) * (getNLine(arg) - 2) + getNLine(arg) - 1, getSizeLine(arg), getMaxD(arg));
 
@@ -69,18 +71,15 @@ void* theThread(void * a) {
 		setMatrix(arg, getMatrixAux(arg));
 		setMatrixAux(arg, tmp);
 
-		barreira_espera_por_todos(arg, total_trab, &localFlag);
+
+		if(barreira_espera_por_todos(arg, total_trab, &localFlag)){
+			dm2dPrintToFile(getMatrix(arg), getFilename(arg));
+			exit(0);
+		}
 
 
 		if(under_maxD_vec[getId(arg)])
 			break;
-		if(getId(arg) == 0 && (i + 1) % getPeriodoS(arg) == 0) {
-			pid_t pid = fork();
-			if(pid == 0) {
-				dm2dPrintToFile(getMatrix(arg), getFilename(arg));
-				exit(0);
-			}
-		}
 
 	}
 
@@ -201,6 +200,7 @@ N, tEsq, tSup, tDir, tInf, iter, trab, maxD, fichS, periodoS);
 		setUnderMaxDVec(&arguments[i], under_maxD_vec);
 		setFlag(&arguments[i], &FLAG);
 		setFilename(&arguments[i], fichS);
+		setPid(&arguments[i], NULL);
 		if (pthread_create(&threads[i], NULL, theThread, &arguments[i]) != 0)
       die("\nErro ao criar uma thread.\n");
   }

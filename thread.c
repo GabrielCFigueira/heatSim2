@@ -3,6 +3,8 @@
 #include <stdlib.h>
 #include <pthread.h>
 #include <string.h>
+#include <unistd.h>
+#include <sys/wait.h>
 #include "matrix2d.h"
 #include "thread.h"
 
@@ -83,7 +85,7 @@ void verificar_maxD(int *vec, int n) {
 
 
 /*barreira que sincroniza as threads */
-void barreira_espera_por_todos (Thread_Arg arg, int FULL, int *localFlag) {
+int barreira_espera_por_todos (Thread_Arg arg, int FULL, int *localFlag) {
 
 	int *threads = getBlockedTrab(arg);
 	int *FLAG = getFlag(arg);
@@ -105,6 +107,13 @@ void barreira_espera_por_todos (Thread_Arg arg, int FULL, int *localFlag) {
 		(*threads) = 0;
 		*FLAG = !(*FLAG);
 		verificar_maxD(under_maxD_vec, FULL);
+		if(getPid(arg) == NULL || waitpid(*getPid(arg), NULL, 0)) {
+			pid_t pid = fork();
+			if (pid == 0)
+				return 1;
+			else
+				setPid(arg, &pid);
+		}
 		if(pthread_cond_broadcast(&wait_for_all_threads) != 0)
 			die("\nErro ao desbloquear variável de condição\n");
 	}
@@ -115,6 +124,8 @@ void barreira_espera_por_todos (Thread_Arg arg, int FULL, int *localFlag) {
 
 	if(pthread_mutex_unlock(&barrier_mutex) != 0)
 		die("\nErro ao desbloquear mutex\n");
+
+	return 0;
 }
 
 
@@ -135,9 +146,10 @@ int *getBlockedTrab(Thread_Arg arg) {return arg->blocked_trab;}
 int *getUnderMaxDVec(Thread_Arg arg) {return arg->under_maxD_vec;}
 int *getFlag(Thread_Arg arg) {return arg->FLAG;}
 char *getFilename(Thread_Arg arg) {return arg->filename;}
-
 DoubleMatrix2D *getMatrix(Thread_Arg arg) {return arg->matrix;}
 DoubleMatrix2D *getMatrixAux(Thread_Arg arg) {return arg->matrix_aux;}
+pid_t *getPid(Thread_Arg arg) {return arg->pid;}
+
 void setMatrix(Thread_Arg arg, DoubleMatrix2D *matrix) {arg->matrix = matrix;}
 void setMatrixAux(Thread_Arg arg, DoubleMatrix2D *matrix) {arg->matrix_aux = matrix;}
 void setIter(Thread_Arg arg, int iter) {arg->iter = iter;}
@@ -150,3 +162,4 @@ void setBlockedTrab(Thread_Arg arg, int *px) {arg->blocked_trab = px;}
 void setUnderMaxDVec(Thread_Arg arg, int *px) {arg->under_maxD_vec = px;}
 void setFlag(Thread_Arg arg, int *px) {arg->FLAG = px;}
 void setFilename(Thread_Arg arg, char* filename) {arg->filename = filename;}
+void setPid(Thread_Arg arg, pid_t *pid) {arg->pid = pid;}

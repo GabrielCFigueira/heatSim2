@@ -16,6 +16,7 @@ typedef struct thread_arg{
 	char						*filename;
 	DoubleMatrix2D 	*matrix;
 	DoubleMatrix2D 	*matrix_aux;
+	pid_t						*pid;
 }*Thread_Arg;
 
 
@@ -32,7 +33,7 @@ void destroy_mutex_cond();
 
 int calc_values(DoubleMatrix2D *matrix, DoubleMatrix2D *matrix_aux, int from_line, int to_line,  int size_line, double maxD);
 void verificar_maxD(int *vec, int n);
-void barreira_espera_por_todos (Thread_Arg arg, int FULL, int *localFlag);
+int barreira_espera_por_todos (Thread_Arg arg, int FULL, int *localFlag);
 
 
 
@@ -50,6 +51,7 @@ int *getFlag(Thread_Arg arg);
 char *getFilename(Thread_Arg arg);
 DoubleMatrix2D *getMatrix(Thread_Arg arg);
 DoubleMatrix2D *getMatrixAux(Thread_Arg arg);
+pid_t *getPid(Thread_Arg arg);
 
 void setMatrix(Thread_Arg arg, DoubleMatrix2D *matrix);
 void setMatrixAux(Thread_Arg arg, DoubleMatrix2D *matrix);
@@ -63,7 +65,7 @@ void setBlockedTrab(Thread_Arg arg, int *px);
 void setUnderMaxDVec(Thread_Arg arg, int *px);
 void setFlag(Thread_Arg arg, int *px);
 void setFilename(Thread_Arg arg, char *filename);
-
+void setPid(Thread_Arg arg, pid_t *pid);
 
 
 #endif
