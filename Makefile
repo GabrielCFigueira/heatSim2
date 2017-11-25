@@ -19,4 +19,4 @@ clean:
 	rm -f *.o heatSim
 
 run:
-	./heatSim 2 10 10 0 0 15 2 0 ola.txt 1
+	./heatSim 2 10 10 0 0 5 2 0 ola.txt 0.05

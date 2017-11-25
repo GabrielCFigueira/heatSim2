@@ -36,6 +36,19 @@ void init_mutex_cond() {
 
 }
 
+void mutex_lock() {
+
+	if(pthread_mutex_lock(&barrier_mutex) != 0)
+		die("\nErro ao bloquear mutex\n");
+}
+
+void mutex_unlock() {
+
+	if(pthread_mutex_unlock(&barrier_mutex) != 0)
+		die("\nErro ao desbloquear mutex\n");
+
+}
+
 
 
 /*destroi o mutex e variavel de condicao */
@@ -72,7 +85,7 @@ dm2dGetEntry(matrix, i, j + 1)) / 4);
 
 /*verifica se todos os valores em vec sao 1;
   se nao for o caso, coloca todos os valores a 0*/
-void verificar_maxD(int *vec, int n) {
+int verificar_maxD(int *vec, int n) {
 	int i, res = 1;
 	for (i = 0; i < n; i++)
 		if((res = res && vec[i]) == 0)
@@ -80,15 +93,17 @@ void verificar_maxD(int *vec, int n) {
 	if(res == 0)
 		for (i = 0; i < n; i++)
 			vec[i] = res;
+	return res;
 }
 
 
 
 /*barreira que sincroniza as threads */
-int barreira_espera_por_todos (Thread_Arg arg, int FULL, int *localFlag) {
+int barreira_espera_por_todos (Thread_Arg arg, int FULL, int *localFlag, int end) {
 
 	int *threads = getBlockedTrab(arg);
-	int *FLAG = getFlag(arg);
+	int *barrierFLAG = getBarrierFlag(arg);
+	int *fileFLAG = getFileFlag(arg);
 	int *under_maxD_vec = getUnderMaxDVec(arg);
 	pid_t *pid = getPid(arg);
 
@@ -96,7 +111,7 @@ int barreira_espera_por_todos (Thread_Arg arg, int FULL, int *localFlag) {
 		die("\nErro ao bloquear mutex\n");
 
 	(*threads)++;
-	*localFlag = *FLAG; /*assim a condicao dentro do while vai ser verdadeira
+	*localFlag = *barrierFLAG; /*assim a condicao dentro do while vai ser verdadeira
 											 * ate o ultimo thread mudar a variavel global "FLAG" */
 
 
@@ -106,18 +121,20 @@ int barreira_espera_por_todos (Thread_Arg arg, int FULL, int *localFlag) {
 	 * as iteracoes e acordar as restantes threads */
 	if(*threads == FULL ) {
 		(*threads) = 0;
-		*FLAG = !(*FLAG);
-		verificar_maxD(under_maxD_vec, FULL);
-		if(*getPid(arg) == 0 || waitpid(*getPid(arg), NULL, WNOHANG)) {
+		*barrierFLAG = !(*barrierFLAG);
+		if(*fileFLAG && (*getPid(arg) == 0 || waitpid(*getPid(arg), NULL, WNOHANG))) {
+			*fileFLAG = 0;
 			*pid = fork();
 			if (*pid == 0)
 				return 1;
 		}
+		if(verificar_maxD(under_maxD_vec, FULL) || end)
+			*fileFLAG = -1;
 		if(pthread_cond_broadcast(&wait_for_all_threads) != 0)
 			die("\nErro ao desbloquear variável de condição\n");
 	}
 
-	while(*FLAG == *localFlag)
+	while(*barrierFLAG == *localFlag)
 		if(pthread_cond_wait(&wait_for_all_threads, &barrier_mutex) != 0)
 			die("\nErro ao esperar pela variável de condição\n");
 
@@ -140,10 +157,10 @@ int getSizeLine(Thread_Arg arg) {return arg->size_line;}
 int getNLine(Thread_Arg arg) {return arg->n_line;}
 int getIter(Thread_Arg arg) {return arg->iter;}
 double getMaxD(Thread_Arg arg) {return arg->maxD;}
-int getPeriodoS(Thread_Arg arg) {return arg->periodoS;}
 int *getBlockedTrab(Thread_Arg arg) {return arg->blocked_trab;}
 int *getUnderMaxDVec(Thread_Arg arg) {return arg->under_maxD_vec;}
-int *getFlag(Thread_Arg arg) {return arg->FLAG;}
+int *getBarrierFlag(Thread_Arg arg) {return arg->barrierFLAG;}
+int *getFileFlag(Thread_Arg arg) {return arg->fileFLAG;}
 char *getFilename(Thread_Arg arg) {return arg->filename;}
 DoubleMatrix2D *getMatrix(Thread_Arg arg) {return arg->matrix;}
 DoubleMatrix2D *getMatrixAux(Thread_Arg arg) {return arg->matrix_aux;}
@@ -156,9 +173,9 @@ void setId(Thread_Arg arg, int id) { arg->id = id;}
 void setSizeLine(Thread_Arg arg, int size_line) {arg->size_line = size_line;}
 void setNLine(Thread_Arg arg, int n_line) {arg->n_line = n_line;}
 void setMaxD(Thread_Arg arg, double maxD) {arg->maxD = maxD;}
-void setPeriodoS(Thread_Arg arg, int periodoS) {arg->periodoS = periodoS;}
 void setBlockedTrab(Thread_Arg arg, int *px) {arg->blocked_trab = px;}
 void setUnderMaxDVec(Thread_Arg arg, int *px) {arg->under_maxD_vec = px;}
-void setFlag(Thread_Arg arg, int *px) {arg->FLAG = px;}
+void setBarrierFlag(Thread_Arg arg, int *px) {arg->barrierFLAG = px;}
+void setFileFlag(Thread_Arg arg, int *px) {arg->fileFLAG = px;}
 void setFilename(Thread_Arg arg, char* filename) {arg->filename = filename;}
 void setPid(Thread_Arg arg, pid_t *pid) {arg->pid = pid;}

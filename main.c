@@ -76,7 +76,7 @@ getMaxD(arg));
 		setMatrixAux(arg, tmp);
 
 
-		if(barreira_espera_por_todos(arg, total_trab, &localFlag)) {
+		if(barreira_espera_por_todos(arg, total_trab, &localFlag, i == getIter(arg) - 1)) {
 			char *filename = getFilename(arg);
 			char *temporaryFilename = (char*) malloc (2 + strlen(filename));
 			temporaryFilename[1 + strlen(filename)] = '\0';
@@ -99,6 +99,7 @@ getMaxD(arg));
 			dm2dPrintToFile(getMatrix(arg), temporaryFilename);
 			sleep(5);
 			rename(temporaryFilename, filename);
+			free(temporaryFilename);
 
 			exit(0);
 		}
@@ -108,8 +109,6 @@ getMaxD(arg));
 			break;
 
 	}
-
-
 	return 0;
 }
 
@@ -139,7 +138,7 @@ int main (int argc, char** argv) {
 	int iter = parse_integer_or_exit(argv[6], "iter");
 	int trab = parse_integer_or_exit(argv[7], "trab");
 	double maxD = parse_double_or_exit(argv[8], "maxD");
-	int periodoS = parse_integer_or_exit(argv[10], "periodoS");
+	double periodoS = parse_double_or_exit(argv[10], "periodoS");
 
 	char *fichS = argv[9];
 	/*FIXME if(fichS == NULL)
@@ -152,7 +151,7 @@ trab < 1 || N % trab != 0 || maxD < 0|| periodoS < 0)
 
 
 	fprintf(stderr, "\nArgumentos:\nN=%d tEsq=%.1f tSup=%.1f tDir=%.1f"
-" tInf=%.1f iteracoes=%d\nthreads=%d maxD=%.1f fichS=%s periodoS=%d\n",
+" tInf=%.1f iteracoes=%d\nthreads=%d maxD=%.1f fichS=%s periodoS=%.1f\n",
 N, tEsq, tSup, tDir, tInf, iter, trab, maxD, fichS, periodoS);
 
 
@@ -219,7 +218,8 @@ N, tEsq, tSup, tDir, tInf, iter, trab, maxD, fichS, periodoS);
 
 
 	int blocked_trab = 0;
-	int FLAG = 1;
+	int barrierFLAG = 1;
+	int fileFLAG = 0;
 	pid_t pid = 0;
 
 
@@ -230,18 +230,31 @@ N, tEsq, tSup, tDir, tInf, iter, trab, maxD, fichS, periodoS);
 		setNLine(&arguments[i], N / trab + 2);
 		setIter(&arguments[i], iter);
 		setMaxD(&arguments[i], maxD);
-		setPeriodoS(&arguments[i], periodoS);
 		setMatrix(&arguments[i], matrix);
 		setMatrixAux(&arguments[i], matrix_aux);
 		setBlockedTrab(&arguments[i], &blocked_trab);
 		under_maxD_vec[i] = 1;
 		setUnderMaxDVec(&arguments[i], under_maxD_vec);
-		setFlag(&arguments[i], &FLAG);
+		setBarrierFlag(&arguments[i], &barrierFLAG);
+		setFileFlag(&arguments[i], &fileFLAG);
 		setFilename(&arguments[i], fichS);
 		setPid(&arguments[i], &pid);
 		if (pthread_create(&threads[i], NULL, theThread, &arguments[i]) != 0)
       die("\nErro ao criar uma thread.\n");
   }
+
+
+	while(1) {
+		sleep(periodoS);
+		mutex_lock();
+		if(fileFLAG == -1) {
+			mutex_unlock();
+			break;
+		}
+		fileFLAG = 1;
+		mutex_unlock();
+	}
+
 
 
 	for (i = 0; i < trab; i++)
