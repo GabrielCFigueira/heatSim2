@@ -91,6 +91,7 @@ getMaxD(arg));
 					else if(i == 0) {
 						temporaryFilename[j--] = filename[i];
 						temporaryFilename[j] = '~';
+						flag = 0;
 						break;
 					}
 				}
