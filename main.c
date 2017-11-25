@@ -134,22 +134,32 @@ trab < 1 || N % trab != 0 || maxD < 0|| periodoS < 0)
 N, tEsq, tSup, tDir, tInf, iter, trab, maxD, fichS, periodoS);
 
 
-	DoubleMatrix2D *matrix;
-	DoubleMatrix2D *matrix_aux;
+	DoubleMatrix2D *matrix = NULL;
+	DoubleMatrix2D *matrix_aux = NULL;
+
+
 	FILE *fp = fopen(fichS, "r");
+
+
 	if(fp != NULL) {
+
 		matrix = readMatrix2dFromFile(fp, N + 2, N + 2);
 		matrix_aux = dm2dNew(N+2, N+2);
 
+		if(matrix_aux == NULL)
+			die("\nErro ao criar as matrizes\n");
+
 		if(fclose(fp) != 0)
 			fprintf(stderr, "\nErro ao fechar o ficheiro %s\n", fichS);
-		if (matrix == NULL || matrix_aux == NULL)
-			goto NormalStart;
-		dm2dCopy(matrix_aux, matrix);
+		if (matrix == NULL)
+			free(matrix_aux);
+		else
+			dm2dCopy(matrix_aux, matrix);
 	}
-	else {
 
-		NormalStart:
+
+	if(matrix == NULL) {
+
 
 		matrix = dm2dNew(N+2, N+2);
  		matrix_aux = dm2dNew(N+2, N+2);
@@ -165,6 +175,7 @@ N, tEsq, tSup, tDir, tInf, iter, trab, maxD, fichS, periodoS);
 		dm2dSetLineTo (matrix_aux, N+1, tInf);
 		dm2dSetColumnTo (matrix_aux, 0, tEsq);
 		dm2dSetColumnTo (matrix_aux, N+1, tDir);
+
 	}
 
 
@@ -221,7 +232,7 @@ N, tEsq, tSup, tDir, tInf, iter, trab, maxD, fichS, periodoS);
 
 	free(under_maxD_vec);
 	dm2dPrint(getMatrix(arguments));
-	wait(NULL);
+	waitpid(pid, NULL, 0);
 	sleep(5);
 	if(unlink(fichS) != 0)
 		fprintf(stderr, "\nErro ao eliminar o ficheiro de salvaguarda\n");
