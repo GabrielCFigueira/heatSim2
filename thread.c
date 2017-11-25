@@ -90,6 +90,7 @@ int barreira_espera_por_todos (Thread_Arg arg, int FULL, int *localFlag) {
 	int *threads = getBlockedTrab(arg);
 	int *FLAG = getFlag(arg);
 	int *under_maxD_vec = getUnderMaxDVec(arg);
+	pid_t *pid = getPid(arg);
 
 	if(pthread_mutex_lock(&barrier_mutex) != 0)
 		die("\nErro ao bloquear mutex\n");
@@ -107,12 +108,10 @@ int barreira_espera_por_todos (Thread_Arg arg, int FULL, int *localFlag) {
 		(*threads) = 0;
 		*FLAG = !(*FLAG);
 		verificar_maxD(under_maxD_vec, FULL);
-		if(getPid(arg) == NULL || waitpid(*getPid(arg), NULL, 0)) {
-			pid_t pid = fork();
-			if (pid == 0)
+		if(*getPid(arg) == 0 || waitpid(*getPid(arg), NULL, WNOHANG)) {
+			*pid = fork();
+			if (*pid == 0)
 				return 1;
-			else
-				setPid(arg, &pid);
 		}
 		if(pthread_cond_broadcast(&wait_for_all_threads) != 0)
 			die("\nErro ao desbloquear variável de condição\n");

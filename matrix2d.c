@@ -155,7 +155,7 @@ void dm2dPrintToFile(DoubleMatrix2D *matrix, const char *filename) {
 	int i, j;
 	for(i = 0; i < matrix->n_l; i++) {
 		for(j = 0; j < matrix->n_c; j++)
-			if (fprintf(f, "%lf ", dm2dGetEntry(matrix, i, j)) < 0) {
+			if (fprintf(f, " %8.4f", dm2dGetEntry(matrix, i, j)) < 0) {
 				fprintf(stderr, "\nErro ao imprimir a matrix para o ficheiro\n");
 				exit(1);
 			}

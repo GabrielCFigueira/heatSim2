@@ -64,7 +64,11 @@ void* theThread(void * a) {
 
 
 	for (i = 0; i < getIter(arg); i++) {
-		under_maxD_vec[getId(arg)] = calc_values(getMatrix(arg), getMatrixAux(arg), getId(arg) * (getNLine(arg) - 2), getId(arg) * (getNLine(arg) - 2) + getNLine(arg) - 1, getSizeLine(arg), getMaxD(arg));
+		under_maxD_vec[getId(arg)] = calc_values(getMatrix(arg),
+getMatrixAux(arg), getId(arg) * (getNLine(arg) - 2),
+getId(arg) * (getNLine(arg) - 2) + getNLine(arg) - 1, getSizeLine(arg),
+getMaxD(arg));
+
 
 		/*troca dos ponteiros matrix e matrix_aux*/
 		tmp = getMatrix(arg);
@@ -72,7 +76,7 @@ void* theThread(void * a) {
 		setMatrixAux(arg, tmp);
 
 
-		if(barreira_espera_por_todos(arg, total_trab, &localFlag)){
+		if(barreira_espera_por_todos(arg, total_trab, &localFlag)) {
 			dm2dPrintToFile(getMatrix(arg), getFilename(arg));
 			exit(0);
 		}
@@ -133,15 +137,24 @@ N, tEsq, tSup, tDir, tInf, iter, trab, maxD, fichS, periodoS);
 	DoubleMatrix2D *matrix;
 	DoubleMatrix2D *matrix_aux;
 	FILE *fp = fopen(fichS, "r");
-	if(fp == NULL) {
+	if(fp != NULL) {
+		matrix = readMatrix2dFromFile(fp, N + 2, N + 2);
+		matrix_aux = dm2dNew(N+2, N+2);
 
+		if(fclose(fp) != 0)
+			fprintf(stderr, "\nErro ao fechar o ficheiro %s\n", fichS);
+		if (matrix == NULL || matrix_aux == NULL)
+			goto NormalStart;
+		dm2dCopy(matrix_aux, matrix);
+	}
+	else {
+
+		NormalStart:
 
 		matrix = dm2dNew(N+2, N+2);
  		matrix_aux = dm2dNew(N+2, N+2);
-
 		if (matrix == NULL || matrix_aux == NULL)
 			die("\nErro ao criar as matrizes\n");
-
 
 		/*valores iniciais da matrix*/
 		dm2dSetLineTo (matrix, 0, tSup);
@@ -152,16 +165,6 @@ N, tEsq, tSup, tDir, tInf, iter, trab, maxD, fichS, periodoS);
 		dm2dSetLineTo (matrix_aux, N+1, tInf);
 		dm2dSetColumnTo (matrix_aux, 0, tEsq);
 		dm2dSetColumnTo (matrix_aux, N+1, tDir);
-
-	}
-	else {
-		matrix = readMatrix2dFromFile(fp, N + 2, N + 2);
-		matrix_aux = dm2dNew(N+2, N+2);
-		dm2dCopy(matrix_aux, matrix);
-		if(fclose(fp) != 0)
-			fprintf(stderr, "\nErro ao fechar o ficheiro %s\n", fichS);
-		if (matrix == NULL || matrix_aux == NULL)
-			die("\nErro ao ler as matrizes do ficheiro\n");
 	}
 
 
@@ -184,6 +187,8 @@ N, tEsq, tSup, tDir, tInf, iter, trab, maxD, fichS, periodoS);
 
 	int blocked_trab = 0;
 	int FLAG = 1;
+	pid_t pid = 0;
+
 
 	int i; /*iterador*/
 	for (i = 0; i < trab; i++) {
@@ -200,7 +205,7 @@ N, tEsq, tSup, tDir, tInf, iter, trab, maxD, fichS, periodoS);
 		setUnderMaxDVec(&arguments[i], under_maxD_vec);
 		setFlag(&arguments[i], &FLAG);
 		setFilename(&arguments[i], fichS);
-		setPid(&arguments[i], NULL);
+		setPid(&arguments[i], &pid);
 		if (pthread_create(&threads[i], NULL, theThread, &arguments[i]) != 0)
       die("\nErro ao criar uma thread.\n");
   }
@@ -217,6 +222,7 @@ N, tEsq, tSup, tDir, tInf, iter, trab, maxD, fichS, periodoS);
 	free(under_maxD_vec);
 	dm2dPrint(getMatrix(arguments));
 	wait(NULL);
+	sleep(5);
 	if(unlink(fichS) != 0)
 		fprintf(stderr, "\nErro ao eliminar o ficheiro de salvaguarda\n");
 
