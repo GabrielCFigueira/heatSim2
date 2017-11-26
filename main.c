@@ -33,7 +33,7 @@ void parentProcessHandler() {
 
 
 
-
+//FIXME ter um alarm() para determinar os interrupts por tempo (periodoS)
 
 
 /*--------------------------------------------------------------------
