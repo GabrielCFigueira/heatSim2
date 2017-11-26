@@ -33,7 +33,7 @@ void parentProcessHandler() {
 
 
 
-//FIXME ter um alarm() para determinar os interrupts por tempo (periodoS)
+//FIXME ter um alarm() e sigmask para determinar os interrupts por tempo (periodoS)
 
 
 /*--------------------------------------------------------------------
@@ -150,7 +150,7 @@ trab < 1 || N % trab != 0 || maxD < 0|| periodoS < 0)
 
 
 	fprintf(stderr, "\nArgumentos:\nN=%d tEsq=%.1f tSup=%.1f tDir=%.1f"
-" tInf=%.1f iteracoes=%d\nthreads=%d maxD=%.1f fichS=%s periodoS=%.1f\n",
+" tInf=%.1f iteracoes=%d\nthreads=%d maxD=%lf fichS=%s periodoS=%lf\n",
 N, tEsq, tSup, tDir, tInf, iter, trab, maxD, fichS, periodoS);
 
 
