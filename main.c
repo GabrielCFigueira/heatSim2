@@ -71,7 +71,7 @@ getMaxD(arg));
 			}
 			dm2dPrintToFile(getMatrix(arg), temporaryFilename);
 			rename(temporaryFilename, filename);
-			free(temporaryFilename);
+			free(temporaryFilename); //FIXME
 
 			exit(0);
 		}
@@ -167,7 +167,7 @@ N, tEsq, tSup, tDir, tInf, iter, trab, maxD, fichS, periodoS);
 
 
 
-	/*alocacao dos threads, seus argumentos e um buffer para a main thread*/
+	/*alocacao dos threads e um buffer para a main thread*/
 	pthread_t *threads = (pthread_t*) malloc(trab *  sizeof(pthread_t));
 	int *under_maxD_vec = (int*) malloc (sizeof(int) * trab);
 
@@ -186,8 +186,9 @@ N, tEsq, tSup, tDir, tInf, iter, trab, maxD, fichS, periodoS);
 	int fileFLAG = 0;
 	pid_t pid = 0;
 
-
+	/*vector de ponteiros para todos os argumentos das threads*/
 	Thread_Arg arguments[trab];
+
 	int i; /*iterador*/
 	for (i = 0; i < trab; i++) {
 
@@ -210,7 +211,7 @@ N, tEsq, tSup, tDir, tInf, iter, trab, maxD, fichS, periodoS);
   }
 
 
-	while(1) {
+	while(periodoS != 0) {
 		sleep(periodoS);
 		mutex_lock();
 		if(fileFLAG == -1) {
