@@ -5,9 +5,27 @@
 #include <pthread.h>
 #include <unistd.h>
 #include <sys/wait.h>
+#include <signal.h>
 #include "util.h"
 #include "matrix2d.h"
 #include "thread.h"
+
+
+
+pid_t pid;
+
+/*fucntion which handles the ctrl+c signal for the child process*/
+void childProcessHandler() {
+/*nothing to do here*/
+ }
+
+/*fucntion which handles the ctrl+c signal for the parent process*/
+void parentProcessHandler() {
+	waitpid(pid, NULL, 0);
+	exit(-1);
+}
+
+
 
 
 
@@ -49,6 +67,9 @@ getMaxD(arg));
 
 
 		if(barreira_espera_por_todos(arg, total_trab, &localFlag, i == getIter(arg) - 1)) {
+			signal(SIGINT, childProcessHandler);
+			sleep(10);
+			sleep(6);
 			char *filename = getFilename(arg);
 			char *temporaryFilename = (char*) malloc (2 + strlen(filename));
 			temporaryFilename[1 + strlen(filename)] = '\0';
@@ -89,6 +110,8 @@ getMaxD(arg));
 
 
 int main (int argc, char** argv) {
+
+	signal(SIGINT, parentProcessHandler);
 
 	if (argc != 11) {
     fprintf(stderr, "Utilizacao: ./heatSim N tEsq tSup"
@@ -166,7 +189,6 @@ N, tEsq, tSup, tDir, tInf, iter, trab, maxD, fichS, periodoS);
 
 
 
-
 	/*alocacao dos threads e um buffer para a main thread*/
 	pthread_t *threads = (pthread_t*) malloc(trab *  sizeof(pthread_t));
 	int *under_maxD_vec = (int*) malloc (sizeof(int) * trab);
@@ -180,14 +202,18 @@ N, tEsq, tSup, tDir, tInf, iter, trab, maxD, fichS, periodoS);
 	init_mutex_cond();
 
 
-
+	/*FIXME flags*/
 	int blocked_trab = 0;
 	int barrierFLAG = 1;
 	int fileFLAG = 0;
-	pid_t pid = 0;
+	pid = 0;
+
+
 
 	/*vector de ponteiros para todos os argumentos das threads*/
 	Thread_Arg arguments[trab];
+
+
 
 	int i; /*iterador*/
 	for (i = 0; i < trab; i++) {
@@ -231,7 +257,7 @@ N, tEsq, tSup, tDir, tInf, iter, trab, maxD, fichS, periodoS);
 
 	destroy_mutex_cond();
 
-
+	sleep(5);
 	free(under_maxD_vec);
 	dm2dPrint(getMatrix(arguments[0]));
 	waitpid(pid, NULL, 0);

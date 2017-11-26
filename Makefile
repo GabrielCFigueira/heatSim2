@@ -21,5 +21,8 @@ matrix2d.o: matrix2d.c matrix2d.h
 clean:
 	rm -f *.o heatSim
 
+zip:
+	zip exercicio4.zip *.c *.h Makefile
+
 run:
 	./heatSim 1 10 10 0 0 5000 1 0 ola.txt 0
