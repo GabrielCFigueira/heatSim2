@@ -12,18 +12,25 @@
 
 
 
-pid_t pid;
 
-/*fucntion which handles the ctrl+c signal for the child process*/
+
+pid_t pid = 0;
+
+/*fucntion which handles the ctrl+c (SIGINT) signal for the child process*/
 void childProcessHandler() {
 /*nothing to do here*/
  }
 
-/*fucntion which handles the ctrl+c signal for the parent process*/
+/*fucntion which handles the ctrl+c (SIGINT) signal for the parent process*/
 void parentProcessHandler() {
 	waitpid(pid, NULL, 0);
 	exit(-1);
 }
+
+
+
+
+
 
 
 
@@ -68,9 +75,10 @@ getMaxD(arg));
 
 		if(barreira_espera_por_todos(arg, total_trab, &localFlag, i == getIter(arg) - 1)) {
 			signal(SIGINT, childProcessHandler);
-			sleep(10);
-			sleep(6);
 			char *filename = getFilename(arg);
+
+			//FIXME o '~' é suposto ser um sufixo em vez de um prefixo
+
 			char *temporaryFilename = (char*) malloc (2 + strlen(filename));
 			temporaryFilename[1 + strlen(filename)] = '\0';
 			int i, j, flag = 1;
@@ -104,6 +112,9 @@ getMaxD(arg));
 	}
 	return 0;
 }
+
+
+
 
 
 
@@ -206,7 +217,7 @@ N, tEsq, tSup, tDir, tInf, iter, trab, maxD, fichS, periodoS);
 	int blocked_trab = 0;
 	int barrierFLAG = 1;
 	int fileFLAG = 0;
-	pid = 0;
+
 
 
 
@@ -257,7 +268,7 @@ N, tEsq, tSup, tDir, tInf, iter, trab, maxD, fichS, periodoS);
 
 	destroy_mutex_cond();
 
-	sleep(5);
+
 	free(under_maxD_vec);
 	dm2dPrint(getMatrix(arguments[0]));
 	waitpid(pid, NULL, 0);

@@ -42,6 +42,20 @@ void mutex_unlock() {
 
 }
 
+void cond_broadcast() {
+
+	if(pthread_cond_broadcast(&wait_for_all_threads) != 0)
+		die("\nErro ao desbloquear variável de condição\n");
+
+}
+
+void cond_wait() {
+
+	if(pthread_cond_wait(&wait_for_all_threads, &barrier_mutex) != 0)
+		die("\nErro ao esperar pela variável de condição\n");
+		
+}
+
 
 
 /*destroi o mutex e variavel de condicao */
@@ -122,13 +136,11 @@ int barreira_espera_por_todos (Thread_Arg arg, int FULL, int *localFlag, int end
 		}
 		if(verificar_maxD(under_maxD_vec, FULL) || end)
 			*fileFLAG = -1;
-		if(pthread_cond_broadcast(&wait_for_all_threads) != 0)
-			die("\nErro ao desbloquear variável de condição\n");
+		cond_broadcast();
 	}
 
 	while(*barrierFLAG == *localFlag)
-		if(pthread_cond_wait(&wait_for_all_threads, &barrier_mutex) != 0)
-			die("\nErro ao esperar pela variável de condição\n");
+		cond_wait();
 
 	mutex_unlock();
 

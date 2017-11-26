@@ -28,6 +28,10 @@ void destroy_mutex_cond();
 void mutex_lock();
 void mutex_unlock();
 
+void cond_broadcast();
+void cond_wait();
+
+
 
 
 int calc_values(DoubleMatrix2D *matrix, DoubleMatrix2D *matrix_aux, int from_line, int to_line,  int size_line, double maxD);
