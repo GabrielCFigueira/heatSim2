@@ -3,14 +3,17 @@ CC=gcc
 
 all: heatSim
 
-heatSim: main.o thread.o matrix2d.o matrix2d.h thread.h
-	$(CC) $(CFLAGS) -pthread -o heatSim main.o thread.o matrix2d.o
+heatSim: main.o thread.o matrix2d.o util.o matrix2d.h thread.h util.h
+	$(CC) $(CFLAGS) -pthread -o heatSim main.o thread.o matrix2d.o util.o
 
-main.o: main.c thread.h matrix2d.h
+main.o: main.c thread.h matrix2d.h util.h
 	$(CC) $(CFLAGS) -c main.c
 
-thread.o: thread.c thread.h matrix2d.h
+thread.o: thread.c thread.h matrix2d.h util.h
 	$(CC) $(FLAGS) -c thread.c
+
+util.o: util.c util.h
+	$(CC) $(FLAGS) -c util.c
 
 matrix2d.o: matrix2d.c matrix2d.h
 	$(CC) $(FLAGS) -c matrix2d.c

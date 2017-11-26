@@ -21,10 +21,6 @@ typedef struct thread_arg{
 
 
 
-/*funcao de erro e termino */
-void die(char* reason);
-
-
 /*funcoes para inicializar e destruir mutex e variavel de condicao */
 void init_mutex_cond();
 void destroy_mutex_cond();
@@ -43,6 +39,7 @@ int barreira_espera_por_todos (Thread_Arg arg, int FULL, int *localFlag, int end
 Thread_Arg createThreadArg(int id, int size_line, int n_line, int iter,
 double maxD, int *blocked_trab, int *under_maxD_vec, int *barrierFLAG,
 int *fileFLAG, pid_t *pid, const char *filename);
+
 
 void freeThreadArg(Thread_Arg arg);
 

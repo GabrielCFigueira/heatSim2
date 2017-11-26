@@ -5,39 +5,10 @@
 #include <pthread.h>
 #include <unistd.h>
 #include <sys/wait.h>
+#include "util.h"
 #include "matrix2d.h"
 #include "thread.h"
 
-
-/*--------------------------------------------------------------------
-| Function: parse_integer_or_exit
----------------------------------------------------------------------*/
-
-int parse_integer_or_exit(char const *str, char const *name)
-{
-	int value;
-
-	if(sscanf(str, "%d", &value) != 1) {
-		fprintf(stderr, "\nErro no argumento \"%s\".\n\n", name);
-		 exit(1);
-  	}
-  	return value;
-}
-
-/*--------------------------------------------------------------------
-| Function: parse_double_or_exit
----------------------------------------------------------------------*/
-
-double parse_double_or_exit(char const *str, char const *name)
-{
-	double value;
-
-	if(sscanf(str, "%lf", &value) != 1) {
-		fprintf(stderr, "\nErro no argumento \"%s\".\n\n", name);
-    		exit(1);
-  	}
-  	return value;
-}
 
 
 /*--------------------------------------------------------------------
@@ -112,11 +83,6 @@ getMaxD(arg));
 	}
 	return 0;
 }
-
-
-
-
-
 
 
 

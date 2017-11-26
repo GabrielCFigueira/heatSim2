@@ -5,6 +5,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <sys/wait.h>
+#include "util.h"
 #include "matrix2d.h"
 #include "thread.h"
 
@@ -14,14 +15,6 @@
 pthread_cond_t 		wait_for_all_threads;
 pthread_mutex_t		barrier_mutex;
 
-
-
-
-/*funcao de erro e termino */
-void die(char* reason) {
-	fprintf(stderr, "%s\n", reason);
-	exit(1);
-}
 
 
 
@@ -107,8 +100,7 @@ int barreira_espera_por_todos (Thread_Arg arg, int FULL, int *localFlag, int end
 	int *under_maxD_vec = getUnderMaxDVec(arg);
 	pid_t *pid = getPid(arg);
 
-	if(pthread_mutex_lock(&barrier_mutex) != 0)
-		die("\nErro ao bloquear mutex\n");
+	mutex_lock();
 
 	(*threads)++;
 	*localFlag = *barrierFLAG; /*assim a condicao dentro do while vai ser verdadeira
@@ -138,8 +130,7 @@ int barreira_espera_por_todos (Thread_Arg arg, int FULL, int *localFlag, int end
 		if(pthread_cond_wait(&wait_for_all_threads, &barrier_mutex) != 0)
 			die("\nErro ao esperar pela variável de condição\n");
 
-	if(pthread_mutex_unlock(&barrier_mutex) != 0)
-		die("\nErro ao desbloquear mutex\n");
+	mutex_unlock();
 
 	return 0;
 }
