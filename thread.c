@@ -146,6 +146,38 @@ int barreira_espera_por_todos (Thread_Arg arg, int FULL, int *localFlag, int end
 
 
 
+/*constructor do argumento da thread, Thread_Arg */
+Thread_Arg createThreadArg(int id, int size_line, int n_line, int iter,
+double maxD, int *blocked_trab, int *under_maxD_vec, int *barrierFLAG,
+int *fileFLAG, pid_t *pid, const char *filename) {
+
+	Thread_Arg arg = (Thread_Arg) malloc(sizeof(struct thread_arg));
+	if (arg == NULL)
+		return NULL;
+
+	arg->id = id;
+	arg->size_line = size_line;
+	arg->n_line = n_line;
+	arg->iter = iter;
+	arg->maxD = maxD;
+	arg->blocked_trab = blocked_trab;
+	arg->under_maxD_vec = under_maxD_vec;
+	arg->barrierFLAG = barrierFLAG;
+	arg->fileFLAG = fileFLAG;
+	arg->pid = pid;
+	arg->filename = (char*) malloc(strlen(filename) + 1);
+	memcpy (arg->filename, filename, strlen(filename) + 1);
+	return arg;
+
+}
+
+
+void freeThreadArg(Thread_Arg arg) {
+	free(getFilename(arg));
+	free(arg);
+}
+
+
 
 
 
@@ -162,20 +194,9 @@ int *getUnderMaxDVec(Thread_Arg arg) {return arg->under_maxD_vec;}
 int *getBarrierFlag(Thread_Arg arg) {return arg->barrierFLAG;}
 int *getFileFlag(Thread_Arg arg) {return arg->fileFLAG;}
 char *getFilename(Thread_Arg arg) {return arg->filename;}
+pid_t *getPid(Thread_Arg arg) {return arg->pid;}
 DoubleMatrix2D *getMatrix(Thread_Arg arg) {return arg->matrix;}
 DoubleMatrix2D *getMatrixAux(Thread_Arg arg) {return arg->matrix_aux;}
-pid_t *getPid(Thread_Arg arg) {return arg->pid;}
 
 void setMatrix(Thread_Arg arg, DoubleMatrix2D *matrix) {arg->matrix = matrix;}
 void setMatrixAux(Thread_Arg arg, DoubleMatrix2D *matrix) {arg->matrix_aux = matrix;}
-void setIter(Thread_Arg arg, int iter) {arg->iter = iter;}
-void setId(Thread_Arg arg, int id) { arg->id = id;}
-void setSizeLine(Thread_Arg arg, int size_line) {arg->size_line = size_line;}
-void setNLine(Thread_Arg arg, int n_line) {arg->n_line = n_line;}
-void setMaxD(Thread_Arg arg, double maxD) {arg->maxD = maxD;}
-void setBlockedTrab(Thread_Arg arg, int *px) {arg->blocked_trab = px;}
-void setUnderMaxDVec(Thread_Arg arg, int *px) {arg->under_maxD_vec = px;}
-void setBarrierFlag(Thread_Arg arg, int *px) {arg->barrierFLAG = px;}
-void setFileFlag(Thread_Arg arg, int *px) {arg->fileFLAG = px;}
-void setFilename(Thread_Arg arg, char* filename) {arg->filename = filename;}
-void setPid(Thread_Arg arg, pid_t *pid) {arg->pid = pid;}

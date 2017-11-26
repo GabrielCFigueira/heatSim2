@@ -4,19 +4,19 @@
 
 
 typedef struct thread_arg{
-	int 						id;
-  int 				   	size_line;
- 	int 				   	n_line;
-	int 						iter;
-	double					maxD;
-	int							*blocked_trab;
-	int							*under_maxD_vec;
-	int							*barrierFLAG;
-	int 						*fileFLAG;
-	char						*filename;
-	DoubleMatrix2D 	*matrix;
-	DoubleMatrix2D 	*matrix_aux;
-	pid_t						*pid;
+	int 				id;
+  int 		   	size_line;
+ 	int 		   	n_line;
+	int 				iter;
+	double			maxD;
+	int					*blocked_trab;
+	int					*under_maxD_vec;
+	int					*barrierFLAG;
+	int 				*fileFLAG;
+	char				*filename;
+	pid_t				*pid;
+	DoubleMatrix2D 		*matrix;
+	DoubleMatrix2D 		*matrix_aux;
 }*Thread_Arg;
 
 
@@ -40,6 +40,13 @@ int barreira_espera_por_todos (Thread_Arg arg, int FULL, int *localFlag, int end
 
 
 
+Thread_Arg createThreadArg(int id, int size_line, int n_line, int iter,
+double maxD, int *blocked_trab, int *under_maxD_vec, int *barrierFLAG,
+int *fileFLAG, pid_t *pid, const char *filename);
+
+void freeThreadArg(Thread_Arg arg);
+
+
 
 /*funcoes de abstracao */
 int getId(Thread_Arg arg);
@@ -52,23 +59,11 @@ int *getUnderMaxDVec(Thread_Arg arg);
 int *getBarrierFlag(Thread_Arg arg);
 int *getFileFlag(Thread_Arg arg);
 char *getFilename(Thread_Arg arg);
+pid_t *getPid(Thread_Arg arg);
 DoubleMatrix2D *getMatrix(Thread_Arg arg);
 DoubleMatrix2D *getMatrixAux(Thread_Arg arg);
-pid_t *getPid(Thread_Arg arg);
 
 void setMatrix(Thread_Arg arg, DoubleMatrix2D *matrix);
 void setMatrixAux(Thread_Arg arg, DoubleMatrix2D *matrix);
-void setIter(Thread_Arg arg, int iter);
-void setId(Thread_Arg arg, int id);
-void setSizeLine(Thread_Arg arg, int size_line);
-void setNLine(Thread_Arg arg, int n_line);
-void setMaxD(Thread_Arg arg, double maxD);
-void setBlockedTrab(Thread_Arg arg, int *px);
-void setUnderMaxDVec(Thread_Arg arg, int *px);
-void setBarrierFlag(Thread_Arg arg, int *px);
-void setFileFlag(Thread_Arg arg, int *px);
-void setFilename(Thread_Arg arg, char *filename);
-void setPid(Thread_Arg arg, pid_t *pid);
-
 
 #endif

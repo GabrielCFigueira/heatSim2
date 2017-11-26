@@ -46,6 +46,7 @@ double parse_double_or_exit(char const *str, char const *name)
 
 void* theThread(void * a) {
 
+
 	Thread_Arg arg = (Thread_Arg) a;
 	DoubleMatrix2D* tmp;
 
@@ -98,7 +99,6 @@ getMaxD(arg));
 				temporaryFilename[j] = filename[i];
 			}
 			dm2dPrintToFile(getMatrix(arg), temporaryFilename);
-			sleep(5);
 			rename(temporaryFilename, filename);
 			free(temporaryFilename);
 
@@ -131,19 +131,17 @@ int main (int argc, char** argv) {
   }
 
 
-	int N = parse_integer_or_exit(argv[1], "N");
-	double tEsq = parse_double_or_exit(argv[2], "tEsq");
-	double tSup = parse_double_or_exit(argv[3], "tSup");
-	double tDir = parse_double_or_exit(argv[4], "tDir");
-	double tInf = parse_double_or_exit(argv[5], "tInf");
-	int iter = parse_integer_or_exit(argv[6], "iter");
-	int trab = parse_integer_or_exit(argv[7], "trab");
-	double maxD = parse_double_or_exit(argv[8], "maxD");
-	double periodoS = parse_double_or_exit(argv[10], "periodoS");
+	const int N = parse_integer_or_exit(argv[1], "N");
+	const double tEsq = parse_double_or_exit(argv[2], "tEsq");
+	const double tSup = parse_double_or_exit(argv[3], "tSup");
+	const double tDir = parse_double_or_exit(argv[4], "tDir");
+	const double tInf = parse_double_or_exit(argv[5], "tInf");
+	const int iter = parse_integer_or_exit(argv[6], "iter");
+	const int trab = parse_integer_or_exit(argv[7], "trab");
+	const double maxD = parse_double_or_exit(argv[8], "maxD");
+	const char *fichS = argv[9];
+	const double periodoS = parse_double_or_exit(argv[10], "periodoS");
 
-	char *fichS = argv[9];
-	/*FIXME if(fichS == NULL)
-		die("\nNome de ficheiro invalido\n"); */
 
 
 	if (N < 1 || tEsq < 0 || tSup < 0 || tDir < 0 || tInf < 0 || iter < 1 ||
@@ -205,11 +203,10 @@ N, tEsq, tSup, tDir, tInf, iter, trab, maxD, fichS, periodoS);
 
 	/*alocacao dos threads, seus argumentos e um buffer para a main thread*/
 	pthread_t *threads = (pthread_t*) malloc(trab *  sizeof(pthread_t));
-	Thread_Arg arguments = (Thread_Arg) malloc(trab * sizeof(struct thread_arg));
 	int *under_maxD_vec = (int*) malloc (sizeof(int) * trab);
 
 
-	if (threads == NULL || arguments == NULL || under_maxD_vec == NULL)
+	if (threads == NULL ||  under_maxD_vec == NULL)
 		die("\nErro ao alocar memoria para os threads\n");
 
 
@@ -224,24 +221,26 @@ N, tEsq, tSup, tDir, tInf, iter, trab, maxD, fichS, periodoS);
 	pid_t pid = 0;
 
 
+	Thread_Arg arguments[trab];
 	int i; /*iterador*/
 	for (i = 0; i < trab; i++) {
-		setId(&arguments[i], i);
-		setSizeLine(&arguments[i], N + 2);
-		setNLine(&arguments[i], N / trab + 2);
-		setIter(&arguments[i], iter);
-		setMaxD(&arguments[i], maxD);
-		setMatrix(&arguments[i], matrix);
-		setMatrixAux(&arguments[i], matrix_aux);
-		setBlockedTrab(&arguments[i], &blocked_trab);
+
+		Thread_Arg arg = createThreadArg(i, N + 2, (N / trab) + 2, iter, maxD,
+&blocked_trab, under_maxD_vec, &barrierFLAG, &fileFLAG, &pid, fichS);
+
+		arguments[i] = arg;
+
+		if(arg == NULL)
+			die("\nErro ao alocar memoria para as threads\n");
+
+		setMatrix(arg, matrix);
+		setMatrixAux(arg, matrix_aux);
+
 		under_maxD_vec[i] = 1;
-		setUnderMaxDVec(&arguments[i], under_maxD_vec);
-		setBarrierFlag(&arguments[i], &barrierFLAG);
-		setFileFlag(&arguments[i], &fileFLAG);
-		setFilename(&arguments[i], fichS);
-		setPid(&arguments[i], &pid);
-		if (pthread_create(&threads[i], NULL, theThread, &arguments[i]) != 0)
+
+		if (pthread_create(&threads[i], NULL, theThread, arg) != 0)
       die("\nErro ao criar uma thread.\n");
+
   }
 
 
@@ -267,16 +266,18 @@ N, tEsq, tSup, tDir, tInf, iter, trab, maxD, fichS, periodoS);
 
 
 	free(under_maxD_vec);
-	dm2dPrint(getMatrix(arguments));
+	dm2dPrint(getMatrix(arguments[0]));
 	waitpid(pid, NULL, 0);
-	sleep(5);
-	if(unlink(fichS) != 0)
-		fprintf(stderr, "\nErro ao eliminar o ficheiro de salvaguarda\n");
+	if(pid != 0 || fp != NULL) {
+		if(unlink(fichS) != 0)
+			fprintf(stderr, "\nErro ao eliminar o ficheiro de salvaguarda\n");
+	}
 
 	free(threads);
 	dm2dFree(matrix);
 	dm2dFree(matrix_aux);
-	free(arguments);
+	for(i = 0; i < trab; i++)
+		freeThreadArg(arguments[i]);
 
 
 	return 0;
