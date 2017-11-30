@@ -24,7 +24,7 @@ void childProcessHandler() {
 /*fucntion which handles the ctrl+c (SIGINT) signal for the parent process*/
 void parentProcessHandler() {
 	waitpid(pid, NULL, 0);
-	exit(-1);
+	_exit(-1);
 }
 
 
@@ -98,9 +98,8 @@ getMaxD(arg));
 				}
 				temporaryFilename[j] = filename[i];
 			}
-			dm2dPrintToFile(getMatrix(arg), temporaryFilename);
+			dm2dPrintToFile(getMatrixAux(arg), temporaryFilename);
 			rename(temporaryFilename, filename);
-			free(temporaryFilename); //FIXME
 
 			exit(0);
 		}
@@ -122,7 +121,7 @@ getMaxD(arg));
 
 int main (int argc, char** argv) {
 
-	signal(SIGINT, parentProcessHandler);
+	sigaction(SIGINT, parentProcessHandler);
 
 	if (argc != 11) {
     fprintf(stderr, "Utilizacao: ./heatSim N tEsq tSup"
@@ -271,6 +270,7 @@ N, tEsq, tSup, tDir, tInf, iter, trab, maxD, fichS, periodoS);
 
 	free(under_maxD_vec);
 	dm2dPrint(getMatrix(arguments[0]));
+  sleep(5);
 	waitpid(pid, NULL, 0);
 	if(pid != 0 || fp != NULL) {
 		if(unlink(fichS) != 0)

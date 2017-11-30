@@ -53,7 +53,7 @@ void cond_wait() {
 
 	if(pthread_cond_wait(&wait_for_all_threads, &barrier_mutex) != 0)
 		die("\nErro ao esperar pela variável de condição\n");
-		
+
 }
 
 
@@ -122,18 +122,22 @@ int barreira_espera_por_todos (Thread_Arg arg, int FULL, int *localFlag, int end
 
 
 
+	if(getId(arg) == 0 && *fileFLAG) {
+		if(waitpid(*getPid(arg), NULL, WNOHANG) || getPid(arg) == 0) {
+			*fileFLAG = 0;
+			*pid = fork();
+			if (*pid == 0)
+				return 1;
+		}
+	}
+
+
 	/* se for a ultima thread a chegar, esta condicao vai ser verdadeira "*threads = FULL"
 	 * esta ultima thread vai repor a "FLAG", determinar se e necessario continuar
 	 * as iteracoes e acordar as restantes threads */
 	if(*threads == FULL ) {
 		(*threads) = 0;
 		*barrierFLAG = !(*barrierFLAG);
-		if(*fileFLAG && (*getPid(arg) == 0 || waitpid(*getPid(arg), NULL, WNOHANG))) {
-			*fileFLAG = 0;
-			*pid = fork();
-			if (*pid == 0)
-				return 1;
-		}
 		if(verificar_maxD(under_maxD_vec, FULL) || end)
 			*fileFLAG = -1;
 		cond_broadcast();
