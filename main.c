@@ -16,34 +16,25 @@
 
 int fileFLAG;
 int periodoS;
+int terminateFLAG;
 pid_t pid;
 
-/*function which handles the ctrl+c (SIGINT) signal for the child process*/
-void childProcessHandler() {
-  /* nothing to do here*/
-  }
 
-/*function which handles the ctrl+c (SIGINT) signal for the parent process*/
+
+/*function which handles the ctrl+c (SIGINT) signal */
 void parentProcessHandler() {
-  raise(SIGALRM);
-  while(1);
-	waitpid(pid, NULL, 0);
-	_exit(-1);
+  terminateFLAG = 1;
 }
 
-/*function which handles the SIGALRM for the parent process */
+/*function which handles the SIGALRM */
 void escreverFicheiro() {
   alarm(periodoS);
   fileFLAG = 1;
-  printf("what up\n");
 }
 
 
 
 
-
-
-//FIXME ter um alarm() e sigmask para determinar os interrupts por tempo (periodoS)
 
 
 /*--------------------------------------------------------------------
@@ -60,14 +51,12 @@ void* theThread(void * a) {
     sigset_t set;
     sigemptyset(&set);
     sigaddset(&set, SIGALRM);
+    sigaddset(&set, SIGINT);
     pthread_sigmask(SIG_UNBLOCK, &set, NULL);
     struct sigaction act;
     memset(&act, '\0', sizeof act);
-    act.sa_handler = &escreverFicheiro;
+    act.sa_handler = escreverFicheiro;
   	sigaction(SIGALRM, &act, NULL);
-    /*struct sigaction child;
-    child.sa_handler = &childProcessHandler;
-    sigaction(SIGINT, &child, NULL);*/
   }
 
 	/*numero total de threads*/
@@ -143,10 +132,6 @@ getMaxD(arg));
 
 int main (int argc, char** argv) {
 
-  struct sigaction act;
-  memset(&act, '\0', sizeof act);
-  act.sa_handler = &parentProcessHandler;
-	sigaction(SIGINT, &act, NULL);
 
 	if (argc != 11) {
     fprintf(stderr, "Utilizacao: ./heatSim N tEsq tSup"
@@ -242,11 +227,17 @@ N, tEsq, tSup, tDir, tInf, iter, trab, maxD, fichS, periodoS);
 	int barrierFLAG = 1;
 	fileFLAG = 0;
   pid = 0;
+  terminateFLAG = 0;
 
 
 
 	/*vector de ponteiros para todos os argumentos das threads*/
 	Thread_Arg arguments[trab];
+
+  struct sigaction act;
+  memset(&act, '\0', sizeof act);
+  act.sa_handler = parentProcessHandler;
+  sigaction(SIGINT, &act, NULL);
 
   sigset_t set;
   sigemptyset(&set);
@@ -258,7 +249,8 @@ N, tEsq, tSup, tDir, tInf, iter, trab, maxD, fichS, periodoS);
 	for (i = 0; i < trab; i++) {
 
 		Thread_Arg arg = createThreadArg(i, N + 2, (N / trab) + 2, iter, maxD,
-&blocked_trab, under_maxD_vec, &barrierFLAG, &fileFLAG, &pid, fichS);
+&blocked_trab, under_maxD_vec, &barrierFLAG, &fileFLAG, &terminateFLAG,
+&pid, fichS);
 
 		arguments[i] = arg;
 
@@ -274,10 +266,6 @@ N, tEsq, tSup, tDir, tInf, iter, trab, maxD, fichS, periodoS);
       die("\nErro ao criar uma thread.\n");
 
   }
-
-  sigemptyset(&set);
-  sigaddset(&set, SIGINT);
-  pthread_sigmask(SIG_UNBLOCK, &set, NULL);
 
   alarm(periodoS);
 

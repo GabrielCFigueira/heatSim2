@@ -13,6 +13,7 @@ typedef struct thread_arg{
 	int					*under_maxD_vec;
 	int					*barrierFLAG;
 	int 				*fileFLAG;
+	int 				*terminateFLAG;
 	char				*filename;
 	pid_t				*pid;
 	DoubleMatrix2D 		*matrix;
@@ -42,7 +43,7 @@ int barreira_espera_por_todos (Thread_Arg arg, int FULL, int *localFlag);
 
 Thread_Arg createThreadArg(int id, int size_line, int n_line, int iter,
 double maxD, int *blocked_trab, int *under_maxD_vec, int *barrierFLAG,
-int *fileFLAG, pid_t *pid, const char *filename);
+int *fileFLAG, int *terminateFLAG, pid_t *pid, const char *filename);
 
 
 void freeThreadArg(Thread_Arg arg);
@@ -59,6 +60,7 @@ int *getBlockedTrab(Thread_Arg arg);
 int *getUnderMaxDVec(Thread_Arg arg);
 int *getBarrierFlag(Thread_Arg arg);
 int *getFileFlag(Thread_Arg arg);
+int *getTerminateFlag(Thread_Arg arg);
 char *getFilename(Thread_Arg arg);
 pid_t *getPid(Thread_Arg arg);
 DoubleMatrix2D *getMatrix(Thread_Arg arg);

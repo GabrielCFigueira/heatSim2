@@ -110,6 +110,7 @@ int barreira_espera_por_todos (Thread_Arg arg, int FULL, int *localFlag) {
 	int *threads = getBlockedTrab(arg);
 	int *barrierFLAG = getBarrierFlag(arg);
 	int *fileFLAG = getFileFlag(arg);
+	int *terminateFLAG = getTerminateFlag(arg);
 	int *under_maxD_vec = getUnderMaxDVec(arg);
 	pid_t *pid = getPid(arg);
 
@@ -119,16 +120,24 @@ int barreira_espera_por_todos (Thread_Arg arg, int FULL, int *localFlag) {
 	*localFlag = *barrierFLAG; /*assim a condicao dentro do while vai ser verdadeira
 											 * ate o ultimo thread mudar a variavel global "FLAG" */
 
-
-
-	if(getId(arg) == 0 && *fileFLAG) {
-		if(waitpid(*pid, NULL, WNOHANG)) {
-			*pid = fork();
-			if (*pid == 0)
-				return 1;
+	if(getId(arg) == 0) {
+		int end;
+		if(*fileFLAG || *terminateFLAG) {
+			end = *terminateFLAG;
+			if(waitpid(*pid, NULL, WNOHANG)) {
+				*pid = fork();
+				if (*pid == 0)
+					return 1;
+			}
+			*fileFLAG = 0;
 		}
-		*fileFLAG = 0;
+
+		if(end) {
+			waitpid(*pid, NULL, 0);
+			exit(-1);
+		}
 	}
+
 
 
 	/* se for a ultima thread a chegar, esta condicao vai ser verdadeira "*threads = FULL"
@@ -154,7 +163,7 @@ int barreira_espera_por_todos (Thread_Arg arg, int FULL, int *localFlag) {
 /*constructor do argumento da thread, Thread_Arg */
 Thread_Arg createThreadArg(int id, int size_line, int n_line, int iter,
 double maxD, int *blocked_trab, int *under_maxD_vec, int *barrierFLAG,
-int *fileFLAG, pid_t *pid, const char *filename) {
+int *fileFLAG, int *terminateFLAG, pid_t *pid, const char *filename) {
 
 	Thread_Arg arg = (Thread_Arg) malloc(sizeof(struct thread_arg));
 	if (arg == NULL)
@@ -169,6 +178,7 @@ int *fileFLAG, pid_t *pid, const char *filename) {
 	arg->under_maxD_vec = under_maxD_vec;
 	arg->barrierFLAG = barrierFLAG;
 	arg->fileFLAG = fileFLAG;
+	arg->terminateFLAG = terminateFLAG;
 	arg->pid = pid;
 	arg->filename = (char*) malloc(strlen(filename) + 1);
 	memcpy (arg->filename, filename, strlen(filename) + 1);
@@ -198,6 +208,7 @@ int *getBlockedTrab(Thread_Arg arg) {return arg->blocked_trab;}
 int *getUnderMaxDVec(Thread_Arg arg) {return arg->under_maxD_vec;}
 int *getBarrierFlag(Thread_Arg arg) {return arg->barrierFLAG;}
 int *getFileFlag(Thread_Arg arg) {return arg->fileFLAG;}
+int *getTerminateFlag(Thread_Arg arg) {return arg->terminateFLAG;}
 char *getFilename(Thread_Arg arg) {return arg->filename;}
 pid_t *getPid(Thread_Arg arg) {return arg->pid;}
 DoubleMatrix2D *getMatrix(Thread_Arg arg) {return arg->matrix;}
