@@ -121,7 +121,7 @@ int barreira_espera_por_todos (Thread_Arg arg, int FULL, int *localFlag) {
 											 * ate o ultimo thread mudar a variavel global "FLAG" */
 
 	if(getId(arg) == 0) {
-		int end;
+		int end = 0;
 		if(*fileFLAG || *terminateFLAG) {
 			end = *terminateFLAG;
 			if(waitpid(*pid, NULL, WNOHANG)) {
@@ -131,8 +131,14 @@ int barreira_espera_por_todos (Thread_Arg arg, int FULL, int *localFlag) {
 			}
 			*fileFLAG = 0;
 		}
-
 		if(end) {
+
+			sigset_t set;
+      sigemptyset(&set);
+      sigaddset(&set, SIGALRM);
+      sigaddset(&set, SIGINT);
+      pthread_sigmask(SIG_BLOCK, &set, NULL);
+			
 			waitpid(*pid, NULL, 0);
 			exit(-1);
 		}

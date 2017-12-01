@@ -17,7 +17,6 @@
 int fileFLAG;
 int periodoS;
 int terminateFLAG;
-pid_t pid;
 
 
 
@@ -86,7 +85,9 @@ getMaxD(arg));
 
 
 		if(barreira_espera_por_todos(arg, total_trab, &localFlag)) {
+
 			char *filename = getFilename(arg);
+
 
 			//FIXME o '~' é suposto ser um sufixo em vez de um prefixo
 
@@ -111,7 +112,6 @@ getMaxD(arg));
 			}
 			dm2dPrintToFile(getMatrixAux(arg), temporaryFilename);
 			rename(temporaryFilename, filename);
-
 			exit(0);
 		}
 
@@ -225,8 +225,8 @@ N, tEsq, tSup, tDir, tInf, iter, trab, maxD, fichS, periodoS);
 	/*FIXME flags*/
 	int blocked_trab = 0;
 	int barrierFLAG = 1;
+  pid_t pid = 0;
 	fileFLAG = 0;
-  pid = 0;
   terminateFLAG = 0;
 
 
@@ -244,6 +244,8 @@ N, tEsq, tSup, tDir, tInf, iter, trab, maxD, fichS, periodoS);
   sigaddset(&set, SIGALRM);
   sigaddset(&set, SIGINT);
   pthread_sigmask(SIG_BLOCK, &set, NULL);
+
+
 
 	int i; /*iterador*/
 	for (i = 0; i < trab; i++) {
