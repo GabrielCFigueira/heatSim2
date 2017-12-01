@@ -1,5 +1,5 @@
-# exercise4
-4th version of HeatSim, exercise4
+# heatSim2
+2nd version of HeatSim
 
 Now using the paradigm of shared memory in multi-threaded programming.
 This program will prematurelly exit if the new values calculated are below an arbitrary value defined by the user.
