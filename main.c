@@ -315,9 +315,9 @@ N, tEsq, tSup, tDir, tInf, iter, trab, maxD, fichS, periodoS);
 
 
 
-	for (i = 0; i < trab; i++)
+  for (i = 0; i < trab; i++)
     if (pthread_join(threads[i], NULL) != 0)
-    	die("\nErro ao esperar por uma thread\n");
+      die("\nErro ao esperar por uma thread\n");
 
 
 	destroy_mutex_cond();
