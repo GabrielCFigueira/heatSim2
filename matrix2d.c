@@ -164,5 +164,6 @@ void dm2dPrintToFile(DoubleMatrix2D *matrix, const char *filename) {
       exit(1);
     }
   }
-	fclose(f);
+  if(fclose(f) != 0)
+    fprintf(stderr, "\nErro ao fechar o ficheiro %s\n", filename);
 }

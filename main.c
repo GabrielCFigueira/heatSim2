@@ -91,6 +91,7 @@ void* theThread(void * a) {
 
 
 	for (i = 0; i < getIter(arg); i++) {
+
 		under_maxD_vec[getId(arg)] = calc_values(getMatrix(arg),
 getMatrixAux(arg), getId(arg) * (getNLine(arg) - 2),
 getId(arg) * (getNLine(arg) - 2) + getNLine(arg) - 1, getSizeLine(arg),
@@ -127,6 +128,8 @@ getMaxD(arg));
 		}
 
 
+    /* termina as iteracoes se todos os valores calculados foram
+    inferiores a maxD */
 		if(under_maxD_vec[getId(arg)])
 			break;
 
@@ -324,7 +327,7 @@ N, tEsq, tSup, tDir, tInf, iter, trab, maxD, fichS, periodoS);
 
   /*se houver ainda algum processo filho em execucao, e necessario esperar
   por ele antes de eliminar o ficheiro de salvaguarda */
-	if(waitpid(pid, NULL, 0) == -1)
+	if(waitpid(pid, NULL, 0) == -1 && pid != 0)
     fprintf(stderr, "\nErro ao esperar pelo processo filho\n");
 
   /*condicao que determina se ha algum ficheiro para eliminar */

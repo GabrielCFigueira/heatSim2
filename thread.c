@@ -84,7 +84,9 @@ void destroy_mutex_cond() {
 /* calcula os valores da matrix da linha "from_line" a linha "to_line";
  * tbm verifica se todos os valores são inferiores a maxD e devolve 1 se sim,
  * 0 caso contrário */
-int calc_values(DoubleMatrix2D *matrix, DoubleMatrix2D *matrix_aux, int from_line, int to_line,  int size_line, double maxD) {
+int calc_values(DoubleMatrix2D *matrix, DoubleMatrix2D *matrix_aux,
+int from_line, int to_line,  int size_line, double maxD) {
+
 	int i, j; /*iteradores*/
 	int too_small = 1;
 	for (i = from_line + 1; i < to_line; i++)
@@ -95,7 +97,9 @@ dm2dGetEntry(matrix, i, j - 1) + dm2dGetEntry(matrix, i + 1, j) +
 dm2dGetEntry(matrix, i, j + 1)) / 4);
 		too_small = too_small && (dm2dGetEntry(matrix_aux, i, j) - dm2dGetEntry(matrix, i, j) < maxD);
 		}
+
 	return too_small;
+
 }
 
 
@@ -144,7 +148,7 @@ int barreira_espera_por_todos (Thread_Arg arg, int FULL, int *localFlag) {
 			existe algum processo filho ainda em execucao, porque se tal for verdade
 			entao nao se deve lancar um novo processo filho */
 			int cond = waitpid(*pid, NULL, WNOHANG);
-			if(cond == -1)
+			if(cond == -1 && *pid != 0)
 				fprintf(stderr, "\nErro ao tentar saber se o processo filho ainda"
 "estava em execucao\n");
 
