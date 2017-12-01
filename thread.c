@@ -29,11 +29,14 @@ void init_mutex_cond() {
 
 }
 
+
+
 void mutex_lock() {
 
 	if(pthread_mutex_lock(&barrier_mutex) != 0)
 		die("\nErro ao bloquear mutex\n");
 }
+
 
 void mutex_unlock() {
 
@@ -42,12 +45,14 @@ void mutex_unlock() {
 
 }
 
+
 void cond_broadcast() {
 
 	if(pthread_cond_broadcast(&wait_for_all_threads) != 0)
 		die("\nErro ao desbloquear variável de condição\n");
 
 }
+
 
 void cond_wait() {
 
@@ -68,6 +73,11 @@ void destroy_mutex_cond() {
 		die("\nErro ao destruir variável de condição\n");
 
 }
+
+
+
+
+
 
 
 
@@ -104,9 +114,12 @@ void verificar_maxD(int *vec, int n) {
 
 
 
+
+
 /*barreira que sincroniza as threads */
 int barreira_espera_por_todos (Thread_Arg arg, int FULL, int *localFlag) {
 
+	/*obtencao das variaveis globais */
 	int *threads = getBlockedTrab(arg);
 	int *barrierFLAG = getBarrierFlag(arg);
 	int *fileFLAG = getFileFlag(arg);
@@ -114,35 +127,70 @@ int barreira_espera_por_todos (Thread_Arg arg, int FULL, int *localFlag) {
 	int *under_maxD_vec = getUnderMaxDVec(arg);
 	pid_t *pid = getPid(arg);
 
+
+	/* a thread 0 vai decidir se e necessario lancar um processo filho para
+	salvaguardar a matrix e/ou terminar */
+	if(getId(arg) == 0) {
+
+		/*flag que no final determina se e' para terminar o programa */
+		int end = 0;
+
+		/*se for suposto salvaguardar uma matrix, esta condicao ai ser verdadeira */
+		if(*fileFLAG || *terminateFLAG) {
+			end = *terminateFLAG;
+
+
+			/* e' utilizada o opcao WNOHANG porque apenas se pretende saber se
+			existe algum processo filho ainda em execucao, porque se tal for verdade
+			entao nao se deve lancar um novo processo filho */
+			int cond = waitpid(*pid, NULL, WNOHANG);
+			if(cond == -1)
+				fprintf(stderr, "\nErro ao tentar saber se o processo filho ainda"
+"estava em execucao\n");
+
+
+			else if(cond != 0) {
+				pid_t processID = fork();
+				if(processID == -1)
+					fprintf(stderr, "\nErro ao criar processo filho\n");
+				else if (processID == 0)
+					return 1;
+				else
+					*pid = processID; /* o pid do ultimo processo filho lancado e atulizado */
+			}
+			*fileFLAG = 0;
+		}
+
+
+
+		if(end) {
+
+			sigset_t set;
+
+			/* bloqueiam-se os signals para o waitpid nao ser interrompido */
+			if(sigemptyset(&set) == -1) die("\nErro ao definir a mascara\n");
+		  if(sigaddset(&set, SIGALRM) == -1) die("\nErro ao definir a mascara\n");
+		  if(sigaddset(&set, SIGINT) == -1) die("\nErro ao definir a mascara\n");
+		  if(pthread_sigmask(SIG_BLOCK, &set, NULL) != 0)
+		     die("\nErro ao definir a mascara\n");
+
+
+			if(waitpid(*pid, NULL, 0) == -1)
+	 		   fprintf(stderr, "\nErro ao esperar pelo processo filho\n");
+
+
+			exit(-1);
+
+		}
+	}
+
+
+
 	mutex_lock();
 
 	(*threads)++;
 	*localFlag = *barrierFLAG; /*assim a condicao dentro do while vai ser verdadeira
 											 * ate o ultimo thread mudar a variavel global "FLAG" */
-
-	if(getId(arg) == 0) {
-		int end = 0;
-		if(*fileFLAG || *terminateFLAG) {
-			end = *terminateFLAG;
-			if(waitpid(*pid, NULL, WNOHANG)) {
-				*pid = fork();
-				if (*pid == 0)
-					return 1;
-			}
-			*fileFLAG = 0;
-		}
-		if(end) {
-
-			sigset_t set;
-      sigemptyset(&set);
-      sigaddset(&set, SIGALRM);
-      sigaddset(&set, SIGINT);
-      pthread_sigmask(SIG_BLOCK, &set, NULL);
-			
-			waitpid(*pid, NULL, 0);
-			exit(-1);
-		}
-	}
 
 
 
@@ -163,6 +211,9 @@ int barreira_espera_por_todos (Thread_Arg arg, int FULL, int *localFlag) {
 
 	return 0;
 }
+
+
+
 
 
 
@@ -193,6 +244,7 @@ int *fileFLAG, int *terminateFLAG, pid_t *pid, const char *filename) {
 }
 
 
+/*destructor de Thread_arg */
 void freeThreadArg(Thread_Arg arg) {
 	free(getFilename(arg));
 	free(arg);

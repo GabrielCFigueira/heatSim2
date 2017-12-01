@@ -13,20 +13,24 @@
 
 
 
-
+/*flag que indica quando lançar um processo filho para escrever para ficheiro */
 int fileFLAG;
+
+/*intervalo de tempo entre cada salvaguarda*/
 int periodoS;
+
+/*flag que indica que é necessário salvaguardar a matrix e terminar o processo*/
 int terminateFLAG;
 
 
 
-/*function which handles the ctrl+c (SIGINT) signal */
-void parentProcessHandler() {
+/*funcao que trata o sinal ctrl+c (SIGINT) */
+void sigintHandler() {
   terminateFLAG = 1;
 }
 
-/*function which handles the SIGALRM */
-void escreverFicheiro() {
+/*funcao que trata o sinal SIGALRM */
+void sigalrmHandler() {
   alarm(periodoS);
   fileFLAG = 1;
 }
@@ -46,17 +50,32 @@ void* theThread(void * a) {
 	Thread_Arg arg = (Thread_Arg) a;
 	DoubleMatrix2D* tmp;
 
+
+  /*a thread 0 vai ser a thread que trata as interrupções SIGINT e SIGALRM.
+  Isto permite o nao uso de mutex dentro dos handlers visto que esta thread
+  vai ser a unica a mexer nas flags que decidem a escrita da matrix para
+  ficheiro*/
+  /*aqui tambem e' definido como tratar o SIGALRM */
   if(getId(arg) == 0) {
+
     sigset_t set;
-    sigemptyset(&set);
-    sigaddset(&set, SIGALRM);
-    sigaddset(&set, SIGINT);
-    pthread_sigmask(SIG_UNBLOCK, &set, NULL);
+
+    if(sigemptyset(&set) == -1) die("\nErro ao definir a mascara\n");
+    if(sigaddset(&set, SIGALRM) == -1) die("\nErro ao definir a mascara\n");
+    if(sigaddset(&set, SIGINT) == -1) die("\nErro ao definir a mascara\n");
+    if(pthread_sigmask(SIG_UNBLOCK, &set, NULL) != 0)
+       die("\nErro ao definir a mascara\n");
+
+
     struct sigaction act;
+
+
     memset(&act, '\0', sizeof act);
-    act.sa_handler = escreverFicheiro;
-  	sigaction(SIGALRM, &act, NULL);
+    act.sa_handler = sigalrmHandler;
+  	if(sigaction(SIGALRM, &act, NULL) == -1)
+      die("\nErro ao definir a funcao de tratamento do sinal SIGALRM\n");
   }
+
 
 	/*numero total de threads*/
 	int total_trab = (getSizeLine(arg) - 2) / (getNLine(arg) - 2);
@@ -84,34 +103,26 @@ getMaxD(arg));
 		setMatrixAux(arg, tmp);
 
 
+    /*se for o processo filho a funcao retorna 1 e ele comeca a escrever a
+    matrix para um ficheiro */
 		if(barreira_espera_por_todos(arg, total_trab, &localFlag)) {
 
 			char *filename = getFilename(arg);
 
 
-			//FIXME o '~' é suposto ser um sufixo em vez de um prefixo
-
+      /*criacao do nome do ficheiro temporario, com o '~' no fim */
 			char *temporaryFilename = (char*) malloc (2 + strlen(filename));
 			temporaryFilename[1 + strlen(filename)] = '\0';
-			int i, j, flag = 1;
-			for (j = (i = strlen(filename) - 1) + 1; i >= 0; i--, j--) {
-				if(flag) {
-				 	if (filename[i] == '/') {
-						temporaryFilename[j] = '~';
-						j--;
-						flag = 0;
-					}
-					else if(i == 0) {
-						temporaryFilename[j--] = filename[i];
-						temporaryFilename[j] = '~';
-						flag = 0;
-						break;
-					}
-				}
-				temporaryFilename[j] = filename[i];
-			}
+      temporaryFilename[strlen(filename)] = '~';
+			memcpy((char*) temporaryFilename, filename, strlen(filename));
+
+
 			dm2dPrintToFile(getMatrixAux(arg), temporaryFilename);
-			rename(temporaryFilename, filename);
+
+      /*se a escrita tiver sucesso, entao muda o nome do ficheiro para o
+      suposto */
+			if(rename(temporaryFilename, filename) == -1)
+        die("\nErro ao mudar o nome do ficheiro\n");
 			exit(0);
 		}
 
@@ -169,7 +180,8 @@ N, tEsq, tSup, tDir, tInf, iter, trab, maxD, fichS, periodoS);
 
 	FILE *fp = fopen(fichS, "r");
 
-
+  /* se officheiro existir e for possivel abrir, entao o programa le a
+  matrix do ficheiro e comeca as iteracoes a partir dessa matrix */
 	if(fp != NULL) {
 
 		matrix = readMatrix2dFromFile(fp, N + 2, N + 2);
@@ -180,6 +192,9 @@ N, tEsq, tSup, tDir, tInf, iter, trab, maxD, fichS, periodoS);
 
 		if(fclose(fp) != 0)
 			fprintf(stderr, "\nErro ao fechar o ficheiro %s\n", fichS);
+
+    /* se ler do ficheiro der erro, a matrix vai ter valor NULL e entao
+    o programa deve criar matrizes de inicio */
 		if (matrix == NULL)
 			free(matrix_aux);
 		else
@@ -187,6 +202,8 @@ N, tEsq, tSup, tDir, tInf, iter, trab, maxD, fichS, periodoS);
 	}
 
 
+  /*se nao existia ficheiro ou ler do ficheiro deu erro, entao o programa
+  comeca normalmente */
 	if(matrix == NULL) {
 
 
@@ -222,10 +239,18 @@ N, tEsq, tSup, tDir, tInf, iter, trab, maxD, fichS, periodoS);
 	init_mutex_cond();
 
 
-	/*FIXME flags*/
+/*inicializacao das flags e outras variaveis globais*/
+
+  /*numero de threads bloqueadas na barreira */
 	int blocked_trab = 0;
+
+  /*flag para sincronizar as threads na barreira */
 	int barrierFLAG = 1;
+
+  /*id do ultimo processo filho criado. É inicialmente posto a 0 */
   pid_t pid = 0;
+
+  /*ver inicio deste ficheiro */
 	fileFLAG = 0;
   terminateFLAG = 0;
 
@@ -234,21 +259,33 @@ N, tEsq, tSup, tDir, tInf, iter, trab, maxD, fichS, periodoS);
 	/*vector de ponteiros para todos os argumentos das threads*/
 	Thread_Arg arguments[trab];
 
+
+  /* associacao da rotina 'sigintHandler' 'a interrupcao SIGINT */
   struct sigaction act;
   memset(&act, '\0', sizeof act);
-  act.sa_handler = parentProcessHandler;
-  sigaction(SIGINT, &act, NULL);
+  act.sa_handler = sigintHandler;
+  if(sigaction(SIGINT, &act, NULL) == -1)
+     die("\nErro ao definir a funcao de tratamento do sinal SIGALRM\n");
 
+
+  /* antes de criar as threads, define-se que as interrupcoes SIGINT e SIGALRM
+  serão bloqueadas. Assim, as threads criadas herdam esta definicao, sendo
+  possivel depois controlar que thread e' que trata as interrupcoes */
   sigset_t set;
-  sigemptyset(&set);
-  sigaddset(&set, SIGALRM);
-  sigaddset(&set, SIGINT);
-  pthread_sigmask(SIG_BLOCK, &set, NULL);
+
+  if(sigemptyset(&set) == -1) die("\nErro ao definir a mascara\n");
+  if(sigaddset(&set, SIGALRM) == -1) die("\nErro ao definir a mascara\n");
+  if(sigaddset(&set, SIGINT) == -1) die("\nErro ao definir a mascara\n");
+  if(pthread_sigmask(SIG_BLOCK, &set, NULL) != 0)
+     die("\nErro ao definir a mascara\n");
+
 
 
 
 	int i; /*iterador*/
 	for (i = 0; i < trab; i++) {
+
+    /*criacao das threads e seus argumentos */
 
 		Thread_Arg arg = createThreadArg(i, N + 2, (N / trab) + 2, iter, maxD,
 &blocked_trab, under_maxD_vec, &barrierFLAG, &fileFLAG, &terminateFLAG,
@@ -269,6 +306,7 @@ N, tEsq, tSup, tDir, tInf, iter, trab, maxD, fichS, periodoS);
 
   }
 
+  /*inicializacao do alarm */
   alarm(periodoS);
 
 
@@ -281,15 +319,23 @@ N, tEsq, tSup, tDir, tInf, iter, trab, maxD, fichS, periodoS);
 
 	destroy_mutex_cond();
 
-
-	free(under_maxD_vec);
+  /*impressao da matrix final resultante */
 	dm2dPrint(getMatrix(arguments[0]));
-	waitpid(pid, NULL, 0);
+
+  /*se houver ainda algum processo filho em execucao, e necessario esperar
+  por ele antes de eliminar o ficheiro de salvaguarda */
+	if(waitpid(pid, NULL, 0) == -1)
+    fprintf(stderr, "\nErro ao esperar pelo processo filho\n");
+
+  /*condicao que determina se ha algum ficheiro para eliminar */
 	if(pid != 0 || fp != NULL) {
 		if(unlink(fichS) != 0)
 			fprintf(stderr, "\nErro ao eliminar o ficheiro de salvaguarda\n");
 	}
 
+
+  /*libertar toda a memoria ocupada e sair*/
+  free(under_maxD_vec);
 	free(threads);
 	dm2dFree(matrix);
 	dm2dFree(matrix_aux);
