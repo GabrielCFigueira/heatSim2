@@ -1,4 +1,4 @@
-# exerc-cio4
+# exercise4
 4th version of HeatSim, exercise4
 
 Now using the paradigm of shared memory in multi-threaded programming.
