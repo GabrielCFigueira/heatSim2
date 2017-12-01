@@ -14,19 +14,29 @@
 
 
 
-pid_t pid = 0;
+int fileFLAG;
+int periodoS;
+pid_t pid;
 
-/*fucntion which handles the ctrl+c (SIGINT) signal for the child process*/
+/*function which handles the ctrl+c (SIGINT) signal for the child process*/
 void childProcessHandler() {
-/*nothing to do here*/
- }
+  /* nothing to do here*/
+  }
 
-/*fucntion which handles the ctrl+c (SIGINT) signal for the parent process*/
+/*function which handles the ctrl+c (SIGINT) signal for the parent process*/
 void parentProcessHandler() {
+  raise(SIGALRM);
+  while(1);
 	waitpid(pid, NULL, 0);
 	_exit(-1);
 }
 
+/*function which handles the SIGALRM for the parent process */
+void escreverFicheiro() {
+  alarm(periodoS);
+  fileFLAG = 1;
+  printf("what up\n");
+}
 
 
 
@@ -46,6 +56,19 @@ void* theThread(void * a) {
 	Thread_Arg arg = (Thread_Arg) a;
 	DoubleMatrix2D* tmp;
 
+  if(getId(arg) == 0) {
+    sigset_t set;
+    sigemptyset(&set);
+    sigaddset(&set, SIGALRM);
+    pthread_sigmask(SIG_UNBLOCK, &set, NULL);
+    struct sigaction act;
+    memset(&act, '\0', sizeof act);
+    act.sa_handler = &escreverFicheiro;
+  	sigaction(SIGALRM, &act, NULL);
+    /*struct sigaction child;
+    child.sa_handler = &childProcessHandler;
+    sigaction(SIGINT, &child, NULL);*/
+  }
 
 	/*numero total de threads*/
 	int total_trab = (getSizeLine(arg) - 2) / (getNLine(arg) - 2);
@@ -73,8 +96,7 @@ getMaxD(arg));
 		setMatrixAux(arg, tmp);
 
 
-		if(barreira_espera_por_todos(arg, total_trab, &localFlag, i == getIter(arg) - 1)) {
-			signal(SIGINT, childProcessHandler);
+		if(barreira_espera_por_todos(arg, total_trab, &localFlag)) {
 			char *filename = getFilename(arg);
 
 			//FIXME o '~' é suposto ser um sufixo em vez de um prefixo
@@ -121,7 +143,10 @@ getMaxD(arg));
 
 int main (int argc, char** argv) {
 
-	sigaction(SIGINT, parentProcessHandler);
+  struct sigaction act;
+  memset(&act, '\0', sizeof act);
+  act.sa_handler = &parentProcessHandler;
+	sigaction(SIGINT, &act, NULL);
 
 	if (argc != 11) {
     fprintf(stderr, "Utilizacao: ./heatSim N tEsq tSup"
@@ -139,7 +164,7 @@ int main (int argc, char** argv) {
 	const int trab = parse_integer_or_exit(argv[7], "trab");
 	const double maxD = parse_double_or_exit(argv[8], "maxD");
 	const char *fichS = argv[9];
-	const double periodoS = parse_double_or_exit(argv[10], "periodoS");
+	periodoS = parse_integer_or_exit(argv[10], "periodoS");
 
 
 
@@ -149,7 +174,7 @@ trab < 1 || N % trab != 0 || maxD < 0|| periodoS < 0)
 
 
 	fprintf(stderr, "\nArgumentos:\nN=%d tEsq=%.1f tSup=%.1f tDir=%.1f"
-" tInf=%.1f iteracoes=%d\nthreads=%d maxD=%lf fichS=%s periodoS=%lf\n",
+" tInf=%.1f iteracoes=%d\nthreads=%d maxD=%lf fichS=%s periodoS=%d\n",
 N, tEsq, tSup, tDir, tInf, iter, trab, maxD, fichS, periodoS);
 
 
@@ -215,15 +240,19 @@ N, tEsq, tSup, tDir, tInf, iter, trab, maxD, fichS, periodoS);
 	/*FIXME flags*/
 	int blocked_trab = 0;
 	int barrierFLAG = 1;
-	int fileFLAG = 0;
-
+	fileFLAG = 0;
+  pid = 0;
 
 
 
 	/*vector de ponteiros para todos os argumentos das threads*/
 	Thread_Arg arguments[trab];
 
-
+  sigset_t set;
+  sigemptyset(&set);
+  sigaddset(&set, SIGALRM);
+  sigaddset(&set, SIGINT);
+  pthread_sigmask(SIG_BLOCK, &set, NULL);
 
 	int i; /*iterador*/
 	for (i = 0; i < trab; i++) {
@@ -246,17 +275,12 @@ N, tEsq, tSup, tDir, tInf, iter, trab, maxD, fichS, periodoS);
 
   }
 
+  sigemptyset(&set);
+  sigaddset(&set, SIGINT);
+  pthread_sigmask(SIG_UNBLOCK, &set, NULL);
 
-	while(periodoS != 0) {
-		sleep(periodoS);
-		mutex_lock();
-		if(fileFLAG == -1) {
-			mutex_unlock();
-			break;
-		}
-		fileFLAG = 1;
-		mutex_unlock();
-	}
+  alarm(periodoS);
+
 
 
 
@@ -270,7 +294,6 @@ N, tEsq, tSup, tDir, tInf, iter, trab, maxD, fichS, periodoS);
 
 	free(under_maxD_vec);
 	dm2dPrint(getMatrix(arguments[0]));
-  sleep(5);
 	waitpid(pid, NULL, 0);
 	if(pid != 0 || fp != NULL) {
 		if(unlink(fichS) != 0)

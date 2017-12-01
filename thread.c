@@ -92,7 +92,7 @@ dm2dGetEntry(matrix, i, j + 1)) / 4);
 
 /*verifica se todos os valores em vec sao 1;
   se nao for o caso, coloca todos os valores a 0*/
-int verificar_maxD(int *vec, int n) {
+void verificar_maxD(int *vec, int n) {
 	int i, res = 1;
 	for (i = 0; i < n; i++)
 		if((res = res && vec[i]) == 0)
@@ -100,13 +100,12 @@ int verificar_maxD(int *vec, int n) {
 	if(res == 0)
 		for (i = 0; i < n; i++)
 			vec[i] = res;
-	return res;
 }
 
 
 
 /*barreira que sincroniza as threads */
-int barreira_espera_por_todos (Thread_Arg arg, int FULL, int *localFlag, int end) {
+int barreira_espera_por_todos (Thread_Arg arg, int FULL, int *localFlag) {
 
 	int *threads = getBlockedTrab(arg);
 	int *barrierFLAG = getBarrierFlag(arg);
@@ -123,12 +122,12 @@ int barreira_espera_por_todos (Thread_Arg arg, int FULL, int *localFlag, int end
 
 
 	if(getId(arg) == 0 && *fileFLAG) {
-		if(waitpid(*getPid(arg), NULL, WNOHANG) || getPid(arg) == 0) {
-			*fileFLAG = 0;
+		if(waitpid(*pid, NULL, WNOHANG)) {
 			*pid = fork();
 			if (*pid == 0)
 				return 1;
 		}
+		*fileFLAG = 0;
 	}
 
 
@@ -138,8 +137,7 @@ int barreira_espera_por_todos (Thread_Arg arg, int FULL, int *localFlag, int end
 	if(*threads == FULL ) {
 		(*threads) = 0;
 		*barrierFLAG = !(*barrierFLAG);
-		if(verificar_maxD(under_maxD_vec, FULL) || end)
-			*fileFLAG = -1;
+		verificar_maxD(under_maxD_vec, FULL);
 		cond_broadcast();
 	}
 

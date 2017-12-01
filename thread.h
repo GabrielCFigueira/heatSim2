@@ -35,8 +35,8 @@ void cond_wait();
 
 
 int calc_values(DoubleMatrix2D *matrix, DoubleMatrix2D *matrix_aux, int from_line, int to_line,  int size_line, double maxD);
-int verificar_maxD(int *vec, int n);
-int barreira_espera_por_todos (Thread_Arg arg, int FULL, int *localFlag, int end);
+void verificar_maxD(int *vec, int n);
+int barreira_espera_por_todos (Thread_Arg arg, int FULL, int *localFlag);
 
 
 
