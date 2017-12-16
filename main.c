@@ -118,7 +118,7 @@ getMaxD(arg));
 			memcpy((char*) temporaryFilename, filename, strlen(filename));
 
 
-			dm2dPrintToFile(getMatrixAux(arg), temporaryFilename);
+			dm2dPrintToFile(getMatrix(arg), temporaryFilename);
 
       /*se a escrita tiver sucesso, entao muda o nome do ficheiro para o
       suposto */
